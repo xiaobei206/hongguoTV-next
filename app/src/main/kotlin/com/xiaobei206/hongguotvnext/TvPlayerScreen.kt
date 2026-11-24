@@ -126,7 +126,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
 
     // A manual or automatic episode change briefly shows the episode/menu HUD.
     LaunchedEffect(player.number) {
-        showMenu(450L)
+        showMenu(500L)
     }
 
     LaunchedEffect(menuVisible, controlsFocused, timerKey) {
@@ -213,13 +213,14 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                     Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
                         if (!menuVisible) {
                             showMenu(3_000L)
+                            true
                         } else if (!controlsFocused) {
                             player.togglePause()
                             showMenu(5_000L, focusControls = true)
+                            true
                         } else {
                             false
                         }
-                        true
                     }
                     else -> false
                 }
@@ -348,23 +349,23 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                             Text(if (player.video.wantsToPlay && player.video.status != TimeControl.PAUSED) "暂停" else "播放")
                         }
                         TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; showMenu(5_000L, true) } },
+                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
                             onClick = { player.skip(-10.0); showSeekHint("−10s"); showMenu(5_000L, true) }
                         ) { Text("后退 10 秒", color = PlayerHudText) }
                         TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; showMenu(5_000L, true) } },
+                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
                             onClick = { player.skip(10.0); showSeekHint("+10s"); showMenu(5_000L, true) }
                         ) { Text("快进 10 秒", color = PlayerHudText) }
                         TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; showMenu(5_000L, true) } },
-                            onClick = { player.step(-1); showMenu(450L) }
+                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
+                            onClick = { player.step(-1); showMenu(500L) }
                         ) { Text("上一集", color = PlayerHudText) }
                         TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; showMenu(5_000L, true) } },
-                            onClick = { player.step(1); showMenu(450L) }
+                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
+                            onClick = { player.step(1); showMenu(500L) }
                         ) { Text("下一集", color = PlayerHudText) }
                         TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; showMenu(5_000L, true) } },
+                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
                             onClick = {
                                 val speeds = Player.speeds
                                 val index = speeds.indexOf(player.speed).coerceAtLeast(-1)
@@ -374,7 +375,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                         ) { Text(if (player.speed == 1f) "倍速" else "${player.speed}×", color = PlayerHudText) }
                         if (player.qualities.isNotEmpty()) {
                             TextButton(
-                                modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; showMenu(5_000L, true) } },
+                                modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
                                 onClick = {
                                     val qualities = player.qualities
                                     val current = qualities.indexOf(player.quality).coerceAtLeast(-1)
@@ -384,11 +385,8 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                             ) { Text(if (player.quality > 0) "${player.quality}P" else "清晰度", color = PlayerHudText) }
                         }
                         TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; showMenu(5_000L, true) } },
-                            onClick = {
-                                player.leave()
-                                onBack()
-                            }
+                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
+                            onClick = { onBack() }
                         ) { Text("退出播放", color = PlayerHudMuted) }
                     }
                 }
