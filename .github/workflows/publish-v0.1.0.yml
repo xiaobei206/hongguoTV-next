@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   publish:
-    if: contains(github.event.head_commit.message, 'release: publish v0.1.0 formal release')
+    if: contains(github.event.head_commit.message, 'publish v0.1.0 formal release') || contains(github.event.head_commit.message, 'fix v0.1.0 publish workflow')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout release target
@@ -21,7 +21,7 @@ jobs:
         with:
           name: hongguoTV-next-v0.1.0-formal-release
           run-id: 45347771897
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: dist
 
       - name: Verify release assets
@@ -71,4 +71,4 @@ jobs:
             dist/hongguoTV-next-v0.1.0-RELEASE-SHA256SUMS.txt
             dist/hongguoTV-next-v0.1.0-release-certificate.txt
         env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
