@@ -115,6 +115,7 @@ private enum class TvTab(val title: String) {
 
 private enum class TvScreen { BROWSE, DETAIL, PLAYER, DEVICE, DIAGNOSTICS, SETTINGS }
 
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class MainActivity : ComponentActivity() {
     private val tvApp get() = application as TvApplication
 
@@ -774,6 +775,7 @@ private fun DetailScreen(
     }
 }
 
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 @Composable
 private fun PlayerScreen(model: AppModel, exo: androidx.media3.exoplayer.ExoPlayer, onBack: () -> Unit) {
     val player = model.player

@@ -8,7 +8,7 @@
 
 两个文件都已被根目录 `.gitignore` 忽略。不要把密钥文件、属性文件或其中的内容复制到 README、提交说明、日志或普通构建 Artifact。
 
-配置缺失时，`assembleDebug` 仍可生成测试 APK。若只提供了两个文件中的一个，或属性键缺失，Gradle 会直接报错。缺少密钥时 `assembleRelease` 不会用 Debug 证书冒充正式签名。
+配置缺失或只配置了一部分时，`assembleDebug`、单元测试与 Lint 仍可继续；Gradle 会给出明确警告。显式请求 `assembleRelease` / `bundleRelease` 时，如果根目录 JKS、属性文件或必要参数缺失，Gradle 会报出具体缺项并停止，不会生成一个容易被误认为正式版本的未签名/Debug 签名包。
 
 ## GitHub Actions Secrets
 

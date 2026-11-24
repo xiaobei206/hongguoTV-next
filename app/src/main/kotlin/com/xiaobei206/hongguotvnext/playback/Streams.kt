@@ -20,6 +20,7 @@ import java.util.UUID
  * it plays each at. It keeps the last few: the one playing, and one the
  * player may still read.
  */
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class StreamRegistry(private val http: DataSource.Factory) : Streams {
     private val streams = LinkedHashMap<String, StreamSource>()
 
@@ -45,6 +46,7 @@ class StreamRegistry(private val http: DataSource.Factory) : Streams {
  * the file's size and, for an encrypted one, its layout; every read after
  * shares them.
  */
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class StreamSource(val sources: List<String>, private val key: ByteArray?, private val http: DataSource.Factory) {
     class File(val size: Long, val layout: Layout?)
 
@@ -122,7 +124,9 @@ private fun totalSize(headers: Map<String, List<String>>): Long? {
  * off goes on from where it stopped, from the other source when there is
  * one, twice at most.
  */
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class CencDataSource(private val registry: StreamRegistry, private val http: DataSource.Factory) : BaseDataSource(true) {
+    @androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
     class Factory(private val registry: StreamRegistry, private val http: DataSource.Factory) : DataSource.Factory {
         override fun createDataSource(): DataSource = CencDataSource(registry, http)
     }

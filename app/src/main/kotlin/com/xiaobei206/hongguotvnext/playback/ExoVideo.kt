@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
  * [CencDataSource]. It is made once, for the whole app: the player's
  * screen, picture in picture and the media session all show the same one.
  */
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class ExoVideo(context: Context, registry: StreamRegistry, http: DataSource.Factory) : Video {
     val exo: ExoPlayer = ExoPlayer.Builder(context)
         .setRenderersFactory(

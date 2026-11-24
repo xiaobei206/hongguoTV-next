@@ -14,6 +14,7 @@ import com.xiaobei206.hongguotvnext.MainActivity
  * it in the notification shade and on the lock screen, with buttons for
  * the episodes either side.
  */
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
 

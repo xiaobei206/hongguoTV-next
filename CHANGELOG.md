@@ -9,6 +9,7 @@
 - 迁移旧 TV 的接力服务与手机诊断发送端，保留 `_hongguotv._tcp.`、协议版本 1 和请求/响应字段，并新增协议单元测试。
 - 加入播放时取消待处理 Feed 请求与封面下载的基础资源隔离。
 - 配置根目录发布签名读取、私密文件忽略规则和 GitHub Actions 构建工作流。
+- 为 Media3 使用位置补充 AndroidX Lint 可识别的 opt-in 标注；修正不完整签名配置不阻断 Debug 开发，但拒绝无正式签名的 Release 打包。该修复仍待 CI 复验。
 - CI 测试、Lint 拆成独立步骤并加入 Gradle 缓存；支持四项签名 Secrets 完整配置时产生正式签名 Release Artifact，缺少正式签名 Secrets 时明确只生成 Debug 测试签名 APK。
 
 ### 验证状态

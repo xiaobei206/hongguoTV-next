@@ -42,3 +42,10 @@
 - 第 14 次 Actions 中单测全部通过；Lint 汇总为 96 errors、26 warnings、1 hint。首个错误是 `UnsafeOptInUsageError`，指向迁移自开心果且已使用文件级 `@file:OptIn(UnstableApi::class)` 的 Media3 源码。
 - 开心果原工程本身已在其 `app/build.gradle.kts` 针对 `UnsafeOptInUsageError` 配置了 Lint disable；新版对齐这一已验证设置，不关闭整个 Lint，Kotlin 编译器仍会检查实际的 opt-in 使用。
 - CI 的 Lint 步骤现在会在任务结束后打印完整文本报告，以便若仍有其他问题可以按 issue 和文件逐项修复。此次修复尚待下一轮 Actions 验证。
+
+
+## 2026-11-24：首轮独立 Lint 与签名容错修正
+
+- 第 14 次 Actions：`testDebugUnitTest` 已通过；`lintDebug` 因 96 个错误失败，第一项定位到迁移的 Media3 `ExoVideo.kt`。现有 Kotlin `@file:OptIn` 能满足编译器，但未被 Android Lint 当作 AndroidX 的 opt-in 证明，因此给实际使用 Media3 的类/函数补充 `androidx.annotation.OptIn(markerClass = [UnstableApi::class])`；后续 CI 将确认是否覆盖所有问题。
+- 调整 Gradle 签名防护：只有显式请求 Release APK 打包、且根目录正式签名配置不完整时才失败；本地部分密钥配置不会再阻止 Debug 构建、测试与 Lint。签名属性文件解析错误会给出明确中文错误，不输出秘密值。
+- 本次代码修正已提交；Lint、APK 打包、ABI 及 SHA 仍以新的 Actions 结果为准。

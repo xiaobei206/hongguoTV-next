@@ -9,7 +9,11 @@ val releaseKeyFile = rootProject.file("hongguoTV-next-release.jks")
 val signingSecretsFile = rootProject.file("signing-secrets.txt")
 val signingSecrets = Properties().apply {
     if (signingSecretsFile.isFile) {
-        signingSecretsFile.inputStream().use(::load)
+        try {
+            signingSecretsFile.inputStream().use(::load)
+        } catch (e: Exception) {
+            throw GradleException("无法读取项目根目录 signing-secrets.txt；请检查文件编码和 properties 格式。", e)
+        }
     }
 }
 val signingKeys = listOf(
@@ -18,15 +22,38 @@ val signingKeys = listOf(
     "ANDROID_KEY_PASSWORD",
 )
 val hasAnySigningInput = releaseKeyFile.exists() || signingSecretsFile.exists()
+val missingSigningParameters = signingKeys.filter { signingSecrets.getProperty(it).isNullOrBlank() }
 val releaseSigningConfigured = releaseKeyFile.isFile &&
     signingSecretsFile.isFile &&
-    signingKeys.all { !signingSecrets.getProperty(it).isNullOrBlank() }
+    missingSigningParameters.isEmpty()
+val releasePackageRequested = gradle.startParameter.taskNames.any { taskName ->
+    val task = taskName.substringAfterLast(':')
+    task.startsWith("assembleRelease", ignoreCase = true) ||
+        task.startsWith("bundleRelease", ignoreCase = true) ||
+        task.startsWith("packageRelease", ignoreCase = true)
+}
+
+if (!releaseSigningConfigured && releasePackageRequested) {
+    val problems = buildList {
+        if (!releaseKeyFile.isFile) add("缺少项目根目录 hongguoTV-next-release.jks")
+        if (!signingSecretsFile.isFile) add("缺少项目根目录 signing-secrets.txt")
+        if (missingSigningParameters.isNotEmpty()) {
+            add("signing-secrets.txt 缺少参数：${missingSigningParameters.joinToString()}")
+        }
+    }
+    throw GradleException(
+        "不能生成正式签名的 Release APK：${problems.joinToString("；")}。请先配置正式密钥；" +
+            "当前仍可运行 assembleDebug 生成测试签名 APK。"
+    )
+}
 
 if (hasAnySigningInput && !releaseSigningConfigured) {
-    throw GradleException(
-        "发布签名配置不完整。必须同时在项目根目录提供 hongguoTV-next-release.jks 与 signing-secrets.txt，" +
-            "且后者必须包含 ANDROID_KEYSTORE_PASSWORD、ANDROID_KEY_ALIAS、ANDROID_KEY_PASSWORD。"
+    logger.warn(
+        "检测到不完整的发布签名输入；Debug 构建/测试继续使用 Android Debug 测试证书。" +
+            "请补齐项目根目录 JKS 与 signing-secrets.txt；Debug 证书不会被当作正式签名。"
     )
+} else if (!releaseSigningConfigured) {
+    logger.lifecycle("正式发布签名尚未配置；Debug APK 使用 Android Debug 测试证书。")
 }
 
 android {
@@ -62,11 +89,8 @@ android {
             if (releaseSigningConfigured) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
-                // Do not silently substitute the debug certificate for release signing.
-                logger.lifecycle(
-                    "Release signing is NOT configured. assembleRelease will be unsigned; " +
-                        "use assembleDebug for an installable test APK."
-                )
+                // Explicit release packaging tasks are rejected above without formal credentials.
+                logger.lifecycle("Release signing is not configured; only a debug test-signed APK can be produced.")
             }
         }
     }

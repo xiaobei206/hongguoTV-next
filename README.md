@@ -47,7 +47,7 @@ ANDROID_KEY_ALIAS=
 ANDROID_KEY_PASSWORD=
 ```
 
-这两个文件及其他 JKS/keystore/P12/PFX 已列入 `.gitignore`，绝不能提交到公开仓库或上传为构建 Artifact。密钥缺失时仍可执行 Debug 测试构建；Gradle 不会静默使用 Debug 签名冒充正式 Release 签名。
+这两个文件及其他 JKS/keystore/P12/PFX 已列入 `.gitignore`，绝不能提交到公开仓库或上传为构建 Artifact。密钥缺失或只配置了部分签名文件时，Debug 测试构建、测试和 Lint 仍可执行；显式请求 Release 包时，如果正式签名不完整会报出具体缺项，不会静默用 Debug 签名冒充正式 Release 签名。
 
 正式签名 CI 预留 Secrets：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。当前是否已配置以仓库 Actions 设置为准。
 

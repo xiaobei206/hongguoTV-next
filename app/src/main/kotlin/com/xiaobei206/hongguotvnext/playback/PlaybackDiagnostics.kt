@@ -12,6 +12,7 @@ import androidx.media3.datasource.TransferListener
 import java.util.TreeMap
 
 /** Network graphs are sampled from actual CDN HTTP transfers beneath CencDataSource. */
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 object PlaybackDiagnostics : TransferListener {
     data class Snapshot(
         val connectionSpeedBps: Long, val networkSamples: List<Long>,

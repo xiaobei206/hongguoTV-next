@@ -22,6 +22,7 @@
 
 ## 构建与测试现状
 - 工程版本设置为 `0.1.0`，使用独立 applicationId，可与旧版并行安装。
+- 最近一次 CI 的 `testDebugUnitTest` 通过，`lintDebug` 因 Media3 opt-in 标注问题失败；已补齐 AndroidX opt-in 标注，等待下一次 CI 验证。
 - Actions 已将测试与 Lint 分成独立步骤并加入 Gradle 缓存；完整配置可选的四个签名 Secrets 后可走正式签名 Artifact 路径。
 - 开心果的数据模型、Feed、存储、播放/CENC、封面缓存及核心测试已迁移；实际构建结果以 [Actions](https://github.com/xiaobei206/hongguoTV-next/actions) 为准。
 - UI 接通当前核心流程；真实焦点循环、返回后精确恢复焦点/滚动位置、遥控器体验需模拟器/电视测试。
