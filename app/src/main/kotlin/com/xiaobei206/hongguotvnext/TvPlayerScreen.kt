@@ -2,6 +2,7 @@ package com.xiaobei206.hongguotvnext
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
@@ -34,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -427,6 +430,12 @@ private fun StatsForNerds(
 ) {
     val networkMbps = snapshot.connectionSpeedBps / 1_000_000.0
     val bitrateMbps = snapshot.bitrate / 1_000_000.0
+    val width = snapshot.width.takeIf { it > 0 } ?: player.sourceWidth
+    val height = snapshot.height.takeIf { it > 0 } ?: player.sourceHeight
+    val resolution = if (width > 0 && height > 0) "${width}×${height}" else if (player.quality > 0) "${player.quality}P" else "—"
+    val optimalResolution = player.qualities.maxOrNull()?.let { "${it}P" } ?: "—"
+    val fps = if (snapshot.frameRate > 0f) String.format(Locale.ROOT, "%.0f fps", snapshot.frameRate) else "—"
+    val bufferSeconds = ((exo.bufferedPosition - exo.currentPosition).coerceAtLeast(0L) / 1000.0)
     Surface(
         modifier = modifier,
         color = Color(0xE8000000),
@@ -437,13 +446,29 @@ private fun StatsForNerds(
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Text("STATS FOR NERDS", color = Color.White, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-            Text("VIDEO  ${snapshot.videoCodec.ifBlank { "—" }}", color = PlayerHudGreen, fontSize = 12.sp)
-            Text("AUDIO  ${snapshot.audioCodec.ifBlank { "—" }}", color = PlayerHudGreen, fontSize = 12.sp)
+            Text("CURRENT / OPTIMAL RES  ${resolution}${if (fps == "—") "" else " · $fps"} / $optimalResolution", color = PlayerHudGreen, fontSize = 12.sp)
+            Text("CODECS  ${snapshot.videoCodec.ifBlank { player.selectedCodec.ifBlank { "—" } }}${snapshot.audioCodec.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()}", color = PlayerHudGreen, fontSize = 12.sp)
             Text("DECODER  ${snapshot.decoderName.ifBlank { "—" }}  ·  ${when (snapshot.decoderHardware) { true -> "HARDWARE"; false -> "SOFTWARE"; null -> "—" }}", color = PlayerHudGreen, fontSize = 12.sp)
-            Text("RESOLUTION  ${if (snapshot.width > 0 && snapshot.height > 0) "${snapshot.width}×${snapshot.height}" else "—"}", color = PlayerHudGreen, fontSize = 12.sp)
-            Text("FRAME RATE  ${if (snapshot.frameRate > 0f) String.format(Locale.ROOT, "%.1f fps", snapshot.frameRate) else "—"}", color = PlayerHudGreen, fontSize = 12.sp)
-            Text("BITRATE  ${if (snapshot.bitrate > 0) String.format(Locale.ROOT, "%.2f Mbps", bitrateMbps) else "—"}", color = PlayerHudGreen, fontSize = 12.sp)
-            Text("NETWORK  ${if (snapshot.connectionSpeedBps > 0L) String.format(Locale.ROOT, "%.2f Mbps", networkMbps) else "—"}  ${if (snapshot.networkActive) "ACTIVE" else "IDLE"}", color = PlayerHudGreen, fontSize = 12.sp)
+            Text("DECODER  ${snapshot.decoderName.ifBlank { "WAITING FOR DECODER" }} · ${when (snapshot.decoderHardware) { true -> "HARDWARE"; false -> "SOFTWARE"; null -> "—" }}", color = PlayerHudGreen, fontSize = 12.sp)
+            Text("BITRATE  ${if (snapshot.bitrate > 0) String.format(Locale.ROOT, "%.2f Mbps", bitrateMbps) else "—"}    CONNECTION SPEED  ${if (snapshot.connectionSpeedBps > 0L) String.format(Locale.ROOT, "%.2f Mbps", networkMbps) else "WAITING"}", color = PlayerHudGreen, fontSize = 12.sp)
+            Text("NETWORK ACTIVITY · LAST 20 SECONDS", color = Color.White.copy(alpha = 0.82f), fontSize = 10.sp)
+            Canvas(Modifier.fillMaxWidth().height(28.dp)) {
+                drawRect(Color(0xFF181818))
+                val samples = snapshot.networkSamples
+                val maxBytes = (samples.maxOrNull() ?: 0L).coerceAtLeast(1L).toFloat()
+                val slot = size.width / samples.size.coerceAtLeast(1)
+                samples.forEachIndexed { index, bytes ->
+                    val h = (bytes.toFloat() / maxBytes * size.height).coerceAtLeast(if (bytes > 0L) 1.dp.toPx() else 0f)
+                    val color = when {
+                        bytes <= 0L -> Color(0xFF262626)
+                        bytes < 20L * 1024L -> Color(0xFFF44336)
+                        bytes < 80L * 1024L -> Color(0xFFFFEE58)
+                        else -> PlayerHudGreen
+                    }
+                    drawRect(color, Offset(index * slot, size.height - h), Size((slot - 1.dp.toPx()).coerceAtLeast(1.dp.toPx()), h))
+                }
+            }
+            Text("NETWORK  ${if (snapshot.networkActive) "ACTIVE" else "IDLE"}    BUFFER HEALTH  ${String.format(Locale.ROOT, "%.1f s", bufferSeconds)}", color = PlayerHudGreen, fontSize = 12.sp)
             Text("DROPPED FRAMES  ${snapshot.droppedFrames}", color = PlayerHudGreen, fontSize = 12.sp)
             Text("POSITION  ${player.video.position.toTimeLabel()} / ${player.video.duration.toTimeLabel()}", color = PlayerHudGreen, fontSize = 12.sp)
         }
