@@ -889,6 +889,26 @@ replace_function(
 }""",
 )
 
+# playPipe can receive player EOF just before the goroutine running
+# ff.Wait publishes its result. Avoid classifying that scheduling race as
+# a user stop; also stress the VLC pipe regression test after patching.
+replace_once(
+    "internal/media/play.go",
+    "\t\"sync\"\n\t\"syscall\"\n)",
+    "\t\"sync\"\n\t\"syscall\"\n\t\"time\"\n)",
+)
+
+replace_once(
+    "internal/media/play.go",
+    "\tvar ffRunErr error\n\tselect {\n\tcase ffRunErr = <-ffDone:\n\tdefault:\n\t\t// The player quit while ffmpeg was still producing the stream.\n\t\tcancelSrc()\n\t\t<-ffDone\n\t\treturn ErrStopped\n\t}",
+    "\tvar ffRunErr error\n\tselect {\n\tcase ffRunErr = <-ffDone:\n\tcase <-time.After(500 * time.Millisecond):\n\t\t// The player may have consumed the complete stream just before the\n\t\t// ff.Wait goroutine published its result. Allow that signal to arrive\n\t\t// before treating the player exit as an early stop.\n\t\tcancelSrc()\n\t\t<-ffDone\n\t\treturn ErrStopped\n\t}",
+)
+
+replace_function(
+    "internal/media/play_test.go",
+    "TestPlayPipesDecryptedStreamIntoVLC",
+    "func TestPlayPipesDecryptedStreamIntoVLC(t *testing.T) {\n\t// Repeat the tiny pipe playback to exercise the completion-signal race.\n\tfor attempt := 0; attempt < 25; attempt++ {\n\t\tl, dir := streamLauncher(t, \"vlc\", recordArgs+\"printf 'clear-ts'\\n\", `cat > \"$(dirname \"$0\")/played\"`+\"\\n\")\n\t\tkey := strings.Repeat(\"0123456789abcdef\", 2)\n\t\tif _, err := l.Play(context.Background(), Request{URL: \"https://media.invalid/drm.mp4\", Key: key, Player: \"vlc\", StartSeconds: 9}); err != nil {\n\t\t\tt.Fatalf(\"attempt %d: %v\", attempt+1, err)\n\t\t}\n\t\tplayed, err := os.ReadFile(filepath.Join(dir, \"played\"))\n\t\tif err != nil {\n\t\t\tt.Fatalf(\"attempt %d: reading player output: %v\", attempt+1, err)\n\t\t}\n\t\tif string(played) != \"clear-ts\" {\n\t\t\tt.Fatalf(\"attempt %d: player read %q\", attempt+1, played)\n\t\t}\n\t\targs := readArgs(t, dir, \"ffmpeg\")\n\t\tfor _, want := range []string{\"-ss\\n9\\n-decryption_key\\n\" + key, \"mpegts\\npipe:1\"} {\n\t\t\tif !strings.Contains(args, want) {\n\t\t\t\tt.Fatalf(\"attempt %d: missing %q in ffmpeg args:\\n%s\", attempt+1, want, args)\n\t\t\t}\n\t\t}\n\t}\n}",
+)
 replace_function(
     "sdk/reset_test.go",
     "TestConcurrentFailuresRegisterOneDevice",
