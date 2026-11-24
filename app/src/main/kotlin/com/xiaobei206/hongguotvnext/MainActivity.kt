@@ -400,7 +400,7 @@ private fun BrowseScreen(
                             id = item.seriesId,
                             title = item.title,
                             cover = item.coverUrl,
-                            sub = listOf(board.name, item.searchScore.ifEmpty { item.heat }).filter { it.isNotBlank() }.joinToString(" · "),
+                            sub = item.searchScore.ifEmpty { item.heat },
                             rank = item.position,
                             episodes = item.episodeCount
                         )
