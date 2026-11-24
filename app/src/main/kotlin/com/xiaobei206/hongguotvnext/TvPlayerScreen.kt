@@ -69,7 +69,6 @@ private val PlayerHudMuted = Color(0xFFB7C0CC)
 @Composable
 internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit) {
     val player = model.player
-    val positionTickForUi = positionTick
     val context = LocalContext.current
     val rootFocus = remember { FocusRequester() }
     val pauseFocus = remember { FocusRequester() }
@@ -84,6 +83,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
     var diagnosticsVisible by remember { mutableStateOf(false) }
     var diagnosticSnapshot by remember { mutableStateOf(PlaybackDiagnostics.snapshot()) }
     var positionTick by remember { mutableLongStateOf(0L) }
+    val positionTickForUi = positionTick
 
     fun showMenu(timeoutMs: Long, focusControls: Boolean = false) {
         menuVisible = true
