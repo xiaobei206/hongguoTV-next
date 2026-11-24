@@ -7,7 +7,7 @@
 - 诊断入口中文命名为“播放诊断”，悬浮框保留英文 `STATS FOR NERDS`，读取已有 `PlaybackDiagnostics` 的真实吞吐、编码、解码器、分辨率、帧率、码率和丢帧信息。
 - 搜索空查询时复用 `AppModel.hot` 和开心果 SDK 热搜结构；展示排名、榜单名、热度/搜索分数，并在热搜加载失败时提供重试。
 - 新剧日期按钮调用迁移自开心果的 `dayLabel(date, todayKey())`，日期筛选逻辑保持原样。
-- 版本提升到 0.1.2 / versionCode 3；CI artifact 与正式 Release 工作流更新为 v0.1.2。源码提交后尚未取得本轮 CI 结果，不预先宣称编译或真机验收成功。
+- 版本提升到 0.1.2 / versionCode 3；CI Artifact 与正式 Release 工作流更新为 v0.1.2。Actions Run [#45389071879](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45389071879) 已通过单测、Lint、Debug 构建、ABI 检查、正式签名与 SHA-256 校验；[v0.1.2 正式 Release](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.2) 已发布。播放和遥控器仍需目标电视真机验收。
 
 ## 2026-11-24：v0.1.1 播放空响应修复与接力开关
 
