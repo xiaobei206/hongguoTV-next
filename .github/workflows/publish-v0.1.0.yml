@@ -1,0 +1,74 @@
+name: Publish v0.1.0 formal release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: contains(github.event.head_commit.message, 'release: publish v0.1.0 formal release')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release target
+        uses: actions/checkout@v5
+
+      - name: Download signed APK from successful Android CI
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.0-formal-release
+          run-id: 45347771897
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.0-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.0-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.0-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.0-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.0-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0
+          target_commitish: fea9ebdd6b3dc9358c4495476539697eb8fe580d
+          name: 红果 TV Next v0.1.0
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 红果 TV Next v0.1.0
+
+            首个正式签名版本。Universal APK 包含 x86_64、arm64-v8a、armeabi-v7a 三种 ABI。
+
+            ### 下载与校验
+            - hongguoTV-next-v0.1.0-universal-release-signed.apk：正式签名通用 APK
+            - hongguoTV-next-v0.1.0-RELEASE-SHA256SUMS.txt：APK 的 SHA-256 校验值
+            - hongguoTV-next-v0.1.0-release-certificate.txt：签名证书指纹
+
+            签名证书 SHA-256：ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34
+
+            ### 验证状态
+            - GitHub Actions 单元测试通过
+            - Android Lint 检查通过（仍有警告）
+            - 三种 ABI 的 native library 检查通过
+            - 正式 APK 签名验证及 SHA-256 校验通过
+
+            ### 已知限制
+            当前尚未完成真实电视设备上的安装、遥控器焦点、CENC 播放和手机到电视接力实机验证。CI 还报告 openhongguo 0.4.0 的 arm64-v8a/libgojni.so 存在 16 KB 对齐警告。
+          files: |
+            dist/hongguoTV-next-v0.1.0-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.0-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.0-release-certificate.txt
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
