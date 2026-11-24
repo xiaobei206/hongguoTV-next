@@ -1,0 +1,68 @@
+name: Publish v0.1.2 formal release
+
+on:
+  workflow_run:
+    workflows: ["Android CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && contains(github.event.workflow_run.head_commit.message, 'release: prepare v0.1.2') }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download signed APK from the successful CI run
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.2-formal-release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.2-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.2-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.2-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.2-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.2-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.2
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: 红果 TV Next v0.1.2
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 红果 TV Next v0.1.2
+
+            ### 更新
+            - 升级 openhongguo 至 0.4.1，修复上游 0.4.0 因签名设备环境不匹配造成的播放模型空响应。
+            - 增加默认开启、可持久保存的设备接力开关。
+            - 播放失败时显示重试入口；支持时可更换匿名设备后再试。
+
+            ### 下载与校验
+            Universal APK 内含 x86_64、arm64-v8a、armeabi-v7a 三种 ABI。
+            Release 附件包括正式签名 APK、SHA-256 校验文件、签名证书指纹。
+
+            签名证书 SHA-256：ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34
+
+            ### 验证说明
+            本次 Release 由成功的 Android CI 自动发布。SDK 修复仍需在目标电视上实测播放；手机到电视的接力协议也仍需真机互通验证。当前 CI 仍报告 openhongguo arm64-v8a/libgojni.so 的 16 KB 页面对齐警告。
+          files: |
+            dist/hongguoTV-next-v0.1.2-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.2-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.2-release-certificate.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
