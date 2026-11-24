@@ -514,10 +514,10 @@ private fun StatsForNerds(
 
     val width = currentSnapshot.width.takeIf { it > 0 } ?: player.sourceWidth
     val height = currentSnapshot.height.takeIf { it > 0 } ?: player.sourceHeight
-    val currentRes = if (width > 0 && height > 0) "$width×$height" else if (player.quality > 0) "\${player.quality}P" else "—"
-    val optimal = player.qualities.maxOrNull()?.let { "\${it}P" } ?: "—"
+    val currentRes = if (width > 0 && height > 0) "$width×$height" else if (player.quality > 0) "${player.quality}P" else "—"
+    val optimal = player.qualities.maxOrNull()?.let { "${it}P" } ?: "—"
     val fpsNumber = if (currentSnapshot.frameRate > 0f) String.format(Locale.ROOT, "%.0f", currentSnapshot.frameRate) else ""
-    val fps = if (fpsNumber.isNotEmpty()) "  \${fpsNumber}fps" else ""
+    val fps = if (fpsNumber.isNotEmpty()) "  ${fpsNumber}fps" else ""
     val videoCodec = currentSnapshot.videoCodec.ifBlank { player.selectedCodec.ifBlank { "—" } }
     val audioCodec = currentSnapshot.audioCodec
     val codecs = if (audioCodec.isNotBlank()) "$videoCodec · $audioCodec" else videoCodec
@@ -526,7 +526,7 @@ private fun StatsForNerds(
         false -> "软件解码"
         null -> "等待解码器"
     }
-    val decoder = currentSnapshot.decoderName.takeIf { it.isNotBlank() }?.let { "\${decoderKind} · $it" } ?: decoderKind
+    val decoder = currentSnapshot.decoderName.takeIf { it.isNotBlank() }?.let { "${decoderKind} · $it" } ?: decoderKind
     val speed = if (currentSnapshot.connectionSpeedBps > 0) {
         String.format(Locale.ROOT, "%.1f Mbps", currentSnapshot.connectionSpeedBps / 1_000_000.0)
     } else {
