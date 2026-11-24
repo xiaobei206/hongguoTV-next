@@ -42,7 +42,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.Stroke
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
@@ -555,6 +555,14 @@ private fun StatsForNerds(
         StatsGraphRow("Network Activity", net, graphHistory.value, StatsGraphKind.NETWORK, sweepPosition.floatValue)
         StatsGraphRow("Buffer Health", buffer, graphHistory.value, StatsGraphKind.BUFFER, sweepPosition.floatValue)
         StatsTextRow("Dropped Frames", currentSnapshot.droppedFrames.toString())
+    }
+}
+
+@Composable
+private fun StatsTextRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = Color.White.copy(alpha = 0.83f), fontSize = 9.sp, modifier = Modifier.width(112.dp), maxLines = 1)
+        Text(value, color = Color.White, fontSize = 9.sp, maxLines = 1, overflow = TextOverflow.Clip)
     }
 }
 
