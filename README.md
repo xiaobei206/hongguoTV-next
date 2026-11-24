@@ -14,7 +14,7 @@
 
 当前开发版本为 v0.1.2：在 v0.1.1 播放兼容性与接力设置基础上，完善电视搜索页热搜榜展示和新剧日期标签；播放页采用遥控器优先的菜单显隐逻辑，并提供“播放诊断”入口与英文 Stats for Nerds 悬浮面板。菜单隐藏时控制层不参与组合，避免按钮残影；方向键、OK、返回和切集的时序仍需目标电视实测。
 
-v0.1.2 的 GitHub Actions 正在验证。只有单元测试、Android Lint、ABI 检查、正式签名 APK 与证书/SHA-256 校验成功后，才会发布正式 Release。
+v0.1.2 已正式发布：[GitHub Release 下载页](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.2)。该版本的单元测试、Android Lint、Debug 构建、Universal APK 三种 ABI 检查、正式签名 APK 构建和签名证书/SHA-256 校验均已通过。电视遥控器和实际播放仍需在目标电视上验收。
 
 最终发布标记提交：`release: prepare v0.1.2 final`。正式 Release 仅由该提交对应的成功 Android CI 自动发布；发布工作流还会校验标记提交和 main 最新提交一致。
 
