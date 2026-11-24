@@ -201,7 +201,8 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                             showMenu(5_000L, focusControls = true)
                             true
                         } else if (menuVisible && controlsFocused) {
-                            true
+                            // Let Compose move focus within the visible control row.
+                            false
                         } else {
                             player.step(-1)
                             true
@@ -212,7 +213,8 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                             showMenu(5_000L, focusControls = true)
                             true
                         } else if (menuVisible && controlsFocused) {
-                            true
+                            // Let Compose move focus within the visible control row.
+                            false
                         } else {
                             player.step(1)
                             true
