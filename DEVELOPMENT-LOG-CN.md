@@ -63,3 +63,10 @@
 
 - 提交 #17 在 Actions 中立即失败且没有 job/check-run；检查发现上一轮生成 workflow 时，ABI 断言行在 `/libgojni.so` 处被截断，造成无效 YAML。这不是应用源码编译失败。
 - 已恢复完整的 grep 断言、for 循环收尾及 success 日志。下一轮 Actions 需验证 workflow 被正确解析，并实际检查 Universal APK 内的三种 ABI。
+
+ 
+## 2026-11-24：恢复已知可解析的 Actions 工作流基线
+
+- 新的 ABI 检查修订 #17/#18 以零 job、零 check-run 在创建后立即失败，表明 Workflow 在 runner 分配前未被正常加载。为避免继续局部编辑一个可能已损坏的 YAML 文件，恢复到已被 #16 实际执行、单测/Lint/assembleDebug 都成功的 workflow 基线，然后只替换 ABI 检查区块。
+- 新块直接检查 Universal APK 的 ZIP 条目，验证三个 ABI 的本地库和每个 ABI 的 `libgojni.so`；其余测试、Lint、签名和 Artifact 步骤沿用已执行过的工作流。
+- 下一次 CI 的首要验证是 workflow 正常生成 job；仍需确认 ABI 检查与 Artifact 上传成功。
