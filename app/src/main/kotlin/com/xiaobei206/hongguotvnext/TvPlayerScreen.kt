@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.nativeKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
@@ -198,26 +199,34 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                         }
                     }
                     Key.DirectionUp -> {
-                        if (menuVisible && !controlsFocused) {
+                        if (event.nativeKeyEvent.repeatCount > 0) true
+                        else if (menuVisible && !controlsFocused) {
                             showMenu(5_000L, focusControls = true)
                             true
                         } else if (menuVisible && controlsFocused) {
                             // Let Compose move focus within the visible control row.
                             false
-                        } else {
+                        } else if (player.hasPrevious) {
                             player.step(-1)
+                            true
+                        } else {
+                            showSeekHint("已经是第一集")
                             true
                         }
                     }
                     Key.DirectionDown -> {
-                        if (menuVisible && !controlsFocused) {
+                        if (event.nativeKeyEvent.repeatCount > 0) true
+                        else if (menuVisible && !controlsFocused) {
                             showMenu(5_000L, focusControls = true)
                             true
                         } else if (menuVisible && controlsFocused) {
                             // Let Compose move focus within the visible control row.
                             false
-                        } else {
+                        } else if (player.hasNext) {
                             player.step(1)
+                            true
+                        } else {
+                            showSeekHint("已经是最后一集")
                             true
                         }
                     }
