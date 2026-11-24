@@ -56,8 +56,24 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
 
-      - name: Run tests and lint
-        run: ./gradlew --no-daemon testDebugUnitTest lintDebug
+      - name: Run unit tests
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Run lint and print the full report
+        shell: bash
+        run: |
+          set +e
+          ./gradlew --no-daemon lintDebug
+          result=$?
+          set -e
+          report="$(find app/build -type f -name 'lint-results-debug.txt' -print -quit)"
+          if [[ -n "$report" ]]; then
+            echo "Full lint report: $report"
+            cat "$report"
+          else
+            echo "Lint report file was not generated." >&2
+          fi
+          exit "$result"
 
       - name: Build Debug APKs
         run: ./gradlew --no-daemon assembleDebug
