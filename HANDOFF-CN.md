@@ -31,7 +31,7 @@
 - 接力协议已经保留关键字段并增加纯协议测试，尚不能据此宣称与实际手机通信通过。
 - 当前 Gradle 实际产出 Universal APK。CI 会检查该 APK 内 x86_64、arm64-v8a、armeabi-v7a 的 native libraries 以及每种 ABI 的 openhongguo libgojni.so；模拟器/真机安装仍是后续验收项。
 - v0.1.0 正式签名 APK：`hongguoTV-next-v0.1.0-universal-release-signed.apk`；SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。
-- v0.1.2 CI 正在验证，只有成功后才会创建正式 Release；当前尚未声称新播放器已通过电视实测。
+- v0.1.2 已正式发布：[下载正式签名 APK](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.2)。CI 已通过单测、Lint、ABI、正式签名与 SHA-256；新播放器尚未在目标电视上实测。
 - 正式证书 SHA-256：`ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34`。
 - Actions Run #20 已完成：[查看构建记录与 Artifact](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。v0.1.0 正式 Release：[打开发布页](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.0)。
 
@@ -47,4 +47,4 @@
 3. 在 ARM 电视安装测试，实际验证 CENC 视频播放、清晰度切换、解码器与播放期间后台任务影响。
 4. 用实际手机测试 `_hongguotv._tcp.` 服务发现、接力请求与成功/失败确认。
 5. 处理 `libgojni.so` 的 16 KB 页面对齐警告；当前仅记录，尚未解决。
-6. 检查 v0.1.1 Release 自动发布结果，并在目标电视上验证播放；用真实手机回归设备接力。
+6. 在目标电视上验收 v0.1.2 播放/遥控器，并用真实手机回归设备接力。
