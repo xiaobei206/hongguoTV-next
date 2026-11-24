@@ -5,7 +5,7 @@
 ### 仓库审计
 - `hongguoTV-next` 初始为空仓库，默认分支为 `main`；新版所有写入仅发生在该仓库。
 - `kaixinguo-android` 与旧 `hongguoTV` 均包含要求核查的主要模型、播放、CENC、缓存和诊断/接力代码。旧版主 UI 真实入口仍是大型 `MainActivity.kt` 和 RecyclerView adapter 流程，不能因 UI 目录存在就认为它运行中。
-- 开心果项目 Gradle version catalog 使用 AGP 9.5.1、Kotlin 2.4.21、Compose BOM 2026.09.00、Activity 1.13.0、Core 1.19.1、lifecycle 2.11.0、Media3 1.11.1、openhongguo 0.4.0、coroutines 1.11.0、JUnit 4.13.2、org.json 20250517；Gradle Wrapper 9.8.2。新版先以此参考项目实际使用的版本作基线。
+- 开心果项目 Gradle version catalog 使用 AGP 9.5.1、Kotlin 2.4.21、Compose BOM 2026.09.00、Activity 1.13.0、Core 1.19.1、lifecycle 2.11.0、Media3 1.11.1、openhongguo 0.4.0、coroutines 1.11.0、JUnit 4.13.2、org.json 20250517；Gradle Wrapper 9.8.2。新版先以此参考项目实际使用的依赖版本作基线；但参考项目的 `compileSdk=37` 在当前稳定 SDK channel 不可安装。官方文档在 2026-11-24 将 Android 17/API 37 列为 Beta、Android 16/API 36 列为最新稳定平台，因此新版构建基线选用稳定的 compileSdk/targetSdk 36，而不让首次可测试构建依赖预览 SDK。
 - 开心果的 `Feed` 具备 ID 去重、独立游标、加载/错误状态、退避重试及首页缓存恢复；`AppModel` 分别缓存首页、榜单、新剧和搜索 Feed。新版本沿用这些模型与状态语义，而非另造一套数据访问层。
 - `CoverStore` 包含 96 MiB 内存 LRU、磁盘缩放 JPEG、同 URL 请求共享与并发 IO 限制。播放核心由 Media3 ExoPlayer、`StreamRegistry`、`CencDataSource` 和 CENC 解密组成。
 - 旧 TV 服务在 NSD 上广播 `_hongguotv._tcp.`，TCP 一行一个 JSON，协议版本 1。播放请求字段：`protocol`、`type=play`、`transferId`、`targetDeviceId`、`seriesId`、`episode`、`positionMs`；回复字段：`protocol`、`transferId`、`accepted`、`message`、`deviceId`。服务在 Activity 前台期间发布可用状态，接力回复等待实际 Player 状态。此协议现在已提取纯编解码器并补充单元测试，仍需要真机互通验证。
@@ -20,7 +20,7 @@
 
 ### 验证与未解决项
 - Git 仓库审计、文件迁移及提交：已执行。
-- 第一次 Actions 运行在 Android SDK setup 阶段失败，日志为旧的 setup-android action 请求已不再存在的 SDK 包 `tools`；该失败发生在 Gradle 启动前，不是 Kotlin 构建失败。CI 已改为直接使用 GitHub runner 预装 SDK 并显式添加 `cmdline-tools/latest/bin` 到 PATH，避免依赖旧 action 的包安装假设。
+- 第一次 Actions 运行在 Android SDK setup 阶段失败，旧的 setup-android action 请求了已不再存在的 SDK 包 `tools`；随后发现 runner 的稳定 SDK channel 也没有 `platforms;android-37`，因为该 API 在官方文档中仍是 Android 17 Beta。CI 已改用预装 sdkmanager、关闭许可管道的误报，并把当前稳定构建目标调整为 Android 16/API 36。以上都发生在 Gradle 编译前，不是 Kotlin 源码测试失败。
 - Gradle 构建、依赖解析、Lint 与测试：最新工作流需重新运行确认，不在源码提交后预先宣称通过。
 - `openhongguo` AAR 的 JNI/ABI：CI 会检查解析到的 AAR 候选和 APK 内原生库目录；仍须检查具体结果。
 - x86_64 模拟器安装、ARM64 电视安装/解码、遥控器长时间焦点行为、实际播放流与接力跨设备通信：尚未通过真机/模拟器验证。
