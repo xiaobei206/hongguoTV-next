@@ -96,7 +96,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.openhongguo)
+    implementation(libs.openhongguo) { artifact { type = "aar" } }
     implementation(libs.coroutines.android)
     implementation(libs.androidx.core)
     implementation(libs.androidx.activity.compose)
