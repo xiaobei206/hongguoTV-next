@@ -1,0 +1,21 @@
+# Android/Gradle
+.gradle/
+**/build/
+local.properties
+.idea/
+*.iml
+
+# Signing materials must stay local and outside public history
+hongguoTV-next-release.jks
+signing-secrets.txt
+keystore.properties
+*.jks
+*.keystore
+*.p12
+*.pfx
+
+# Generated outputs
+dist/
+*.apk
+*.aab
+*.sha256

@@ -1,0 +1,86 @@
+name: Android CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Unit tests, lint and universal debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install compile SDK
+        run: sdkmanager --install "platforms;android-37" "build-tools;37.0.0"
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Run tests and lint
+        run: ./gradlew --no-daemon testDebugUnitTest lintDebug
+
+      - name: Build Debug APKs
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Check openhongguo AAR and packaged native libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Resolved openhongguo AAR candidates:"
+          find "$HOME/.gradle/caches" -type f -name '*openhongguo*0.4.0*.aar' -print || true
+          echo "APK outputs:"
+          find app/build/outputs/apk/debug -type f -name '*.apk' -print
+          echo "Native libraries packaged in APK outputs (empty can mean the SDK has no JNI dependencies):"
+          while IFS= read -r apk; do
+            echo "== $apk =="
+            unzip -l "$apk" | grep -E 'lib/(x86_64|arm64-v8a|armeabi-v7a)/.*\.so$' || true
+          done < <(find app/build/outputs/apk/debug -type f -name '*.apk')
+
+      - name: Prepare test-signed universal APK and SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          apk="$(find app/build/outputs/apk/debug -type f -name '*universal*.apk' -print -quit)"
+          if [[ -z "$apk" ]]; then
+            apk="$(find app/build/outputs/apk/debug -type f -name 'app-debug.apk' -print -quit)"
+          fi
+          if [[ -z "$apk" ]]; then
+            echo "Could not locate a universal or non-split debug APK." >&2
+            exit 1
+          fi
+          cp "$apk" "dist/hongguoTV-next-v0.1.0-universal-test-signed.apk"
+          (cd dist && sha256sum hongguoTV-next-v0.1.0-universal-test-signed.apk > hongguoTV-next-v0.1.0-SHA256SUMS.txt)
+          cat dist/hongguoTV-next-v0.1.0-SHA256SUMS.txt
+
+      - name: Upload APK and checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.0-test-apk
+          path: |
+            dist/hongguoTV-next-v0.1.0-universal-test-signed.apk
+            dist/hongguoTV-next-v0.1.0-SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
