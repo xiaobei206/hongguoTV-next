@@ -2,6 +2,14 @@
 
 独立的新一代 Android TV 客户端。所有新版开发仅写入本仓库；旧版 [hongguoTV](https://github.com/xiaobei206/hongguoTV) 保持只读，手机/平板项目 [kaixinguo-android](https://github.com/xiaobei206/kaixinguo-android) 是核心架构参考。
 
+## 系统兼容目标
+
+- 使用一个 Universal APK，不拆分 Legacy / Standard 两套业务代码。
+- 统一安装最低版本为 Android 6.0（API 23），当前版本将 minSdk 设为 23。
+- 启用 Core Library Desugaring，让睡眠定时器和诊断时间戳使用的 java.time.Instant 可在 API 23 上运行。
+- Android CI 检查最终 APK Manifest，硬性要求 sdkVersion 为 23；依赖或 Manifest 合并若抬高最低系统版本，构建将失败。
+- API 23 代表安装与基础运行兼容，不代表老电视硬件一定支持所有 DRM、编码格式、清晰度或硬件解码能力；这些仍需实机验证。
+
 ## 当前实现
 
 - Kotlin + Jetpack Compose 的电视端主流程：推荐、排行榜、新剧上线、搜索、收藏、历史、详情、选集、播放器、设备接力、诊断和设置入口。
@@ -12,11 +20,11 @@
 
 ## 当前验证状态
 
-当前开发版本为 v0.1.3。本版修复此前只升级官方 Maven SDK、却未接入开心果空响应恢复实现的问题：Android CI 固定检出自维护的 `openhongguo` 提交 `1e9334185a46033bcc4e3e30fc41f649958b1389`，运行 SDK Go 测试、应用诊断补丁、编译本地 AAR，再将该 AAR 注入 NEXT。V5 POST 返回 HTTP 200 空响应后，SDK 会尝试同一身份的签名、无请求体 `video_tab` GET，并严格校验当前分集；APK 打包没有指定该 AAR 会直接失败。
+当前开发版本为 v0.1.4，正在把统一安装包的最低系统要求从 Android 9.0（API 28）降至 Android 6.0（API 23）。本版加入 Core Library Desugaring，并在 CI 中检查实际 APK 的最低系统版本；CI 与老电视实机安装/播放结果以本次构建为准。本版修复此前只升级官方 Maven SDK、却未接入开心果空响应恢复实现的问题：Android CI 固定检出自维护的 `openhongguo` 提交 `1e9334185a46033bcc4e3e30fc41f649958b1389`，运行 SDK Go 测试、应用诊断补丁、编译本地 AAR，再将该 AAR 注入 NEXT。V5 POST 返回 HTTP 200 空响应后，SDK 会尝试同一身份的签名、无请求体 `video_tab` GET，并严格校验当前分集；APK 打包没有指定该 AAR 会直接失败。
 
-v0.1.3 的源码修复和构建校验已经写入，但这一提交的 CI 与目标电视实机播放结果必须分别核验；不能把提交本身当作构建成功或实机播放成功的证据。v0.1.2 正式版仍保留在 [GitHub Release 下载页](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.2)。
+v0.1.3 的播放空响应修复已通过 Android CI 并正式发布；SDK 空响应回退的目标电视实播仍需在设备上验证。不能把 CI 构建成功等同于特定电视的硬件解码或播放成功。
 
-v0.1.2 已正式发布：[GitHub Release 下载页](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.2)。该版本的单元测试、Android Lint、Debug 构建、Universal APK 三种 ABI 检查、正式签名 APK 构建和签名证书/SHA-256 校验均已通过。电视遥控器和实际播放仍需在目标电视上验收。
+v0.1.3 已正式发布：[GitHub Release 下载页](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.3)。该版本的单元测试、Android Lint、Debug 构建、Universal APK 三种 ABI 检查、正式签名 APK 构建和签名证书/SHA-256 校验均已通过。电视遥控器和实际播放仍需在目标电视上验收。
 
 最终发布标记提交：`release: prepare v0.1.2 final`。正式 Release 仅由该提交对应的成功 Android CI 自动发布；发布工作流还会校验标记提交和 main 最新提交一致。
 

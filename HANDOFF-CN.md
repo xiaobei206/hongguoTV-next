@@ -2,8 +2,8 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.3`（自维护播放 SDK、空响应回退与诊断构建链路；CI/实机待验收）
-- **发布候选标记：** `release: prepare v0.1.2 final`；该提交的 Android CI、正式签名与 SHA-256 校验均已成功，Release 已发布。
+- **版本：** `0.1.4`（统一 APK 最低 Android 6.0/API 23；等待 CI 与目标电视实机验收）
+- **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.3 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
@@ -32,7 +32,9 @@
 - 核心回退为 V5 空响应 → 同一身份 signed bodyless `video_tab` GET → 旧接口兼容回退，并严格匹配当前分集。
 
 ## 构建与测试现状
-- 当前工程版本为 `0.1.2`，使用独立 applicationId，可与旧版并行安装。
+
+- Android 6.0 兼容改动：minSdk=23，启用 Core Library Desugaring 2.1.5；CI 检查最终 APK 的 sdkVersion 必须为 23。CI 成功仍不等于 E55A / 75U6900C 真机播放已通过。
+- 当前工程版本为 `0.1.4`，使用独立 applicationId，可与旧版并行安装；minSdk 目标为 API 23。
 - [v0.1.2 正式构建](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45389071879) 全部成功：单测、Lint、Debug APK、ABI 检查、正式 Release APK、签名证书验证及 SHA-256。早期基线 [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533) 作为 v0.1.0 历史记录保留。
 - Actions 已将测试与 Lint 分成独立步骤并加入 Gradle 缓存；完整配置可选的四个签名 Secrets 后可走正式签名 Artifact 路径。
 - 开心果的数据模型、Feed、存储、播放/CENC、封面缓存及核心测试已迁移；实际构建结果以 [Actions](https://github.com/xiaobei206/hongguoTV-next/actions) 为准。

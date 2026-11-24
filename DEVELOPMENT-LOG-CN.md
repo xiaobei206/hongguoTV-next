@@ -1,5 +1,14 @@
 # 开发日志（持续累积）
 
+## 2026-11-24：v0.1.4 将最低系统版本下调至 Android 6.0
+
+- 按家庭电视兼容目标，先尝试一个 Universal APK 覆盖全部设备，不维护双仓库或两套业务代码；最低安装版本由 Android 9.0/API 28 下调至 Android 6.0/API 23。
+- 审计源码发现 PhoneDiagnosticClient 与 Player 使用 java.time.Instant；加入 Core Library Desugaring 2.1.5，避免 API 23 设备在诊断时间戳和睡眠定时器路径触发缺失类问题。
+- 保持 Media3 1.11.1、自维护 openhongguo SDK AAR、CENC/播放器与当前 ABI 配置，不为兼容目标盲目降级播放依赖。
+- Android CI 新增读取最终 Universal APK Manifest 的门禁，要求最低 SDK 精确为 API 23；若传递依赖要求更高 API、编译/Manifest 合并不接受 API 23，CI 应失败而不是宣称兼容。
+- 当前代码目标是 Android 6.0 系统安装兼容；Widevine/DRM、视频编码、SoC 解码器和遥控器焦点表现仍需在小米 E55A 与东芝 75U6900C 实机逐项验证。CI 尚未运行时不宣称 API 23 构建已通过。
+
+
 ## 2026-11-24：v0.1.3 修复播放空响应与统一 SDK 构建
 
 - 对照 NEXT 初版和开心果历史提交后确认：两边 `Catalog.resolvePlayback` 入口基本相同，差异是 NEXT 只依赖官方 Maven SDK；开心果早在 2026-11-21 就加入 V5 空响应后的签名 `video_tab` GET 恢复，并通过工作流注入本地 AAR。

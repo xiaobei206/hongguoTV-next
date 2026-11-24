@@ -82,10 +82,11 @@ android {
 
     defaultConfig {
         applicationId = "com.xiaobei206.hongguotvnext"
-        minSdk = 28
+        // API 23 keeps one installable build for Android 6.0-era TVs.
+        minSdk = 23
         targetSdk = 36
-        versionCode = 4
-        versionName = "0.1.3"
+        versionCode = 5
+        versionName = "0.1.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -125,6 +126,9 @@ android {
     }
 
     compileOptions {
+        // java.time is used by the sleep timer and diagnostic timestamps.
+        // Desugar it so those code paths also work on Android 6.0 (API 23).
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -146,6 +150,8 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
     if (patchedOpenhongguoAarFile != null) {
         implementation(files(patchedOpenhongguoAarFile))
     } else {
