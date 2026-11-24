@@ -82,6 +82,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
     var hintKey by remember { mutableLongStateOf(0L) }
     var diagnosticsVisible by remember { mutableStateOf(false) }
     var diagnosticSnapshot by remember { mutableStateOf(PlaybackDiagnostics.snapshot()) }
+    var positionTick by remember { mutableLongStateOf(0L) }
 
     fun showMenu(timeoutMs: Long, focusControls: Boolean = false) {
         menuVisible = true
@@ -93,6 +94,13 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
         } else {
             runCatching { rootFocus.requestFocus() }
         }
+    }
+
+    fun renewControlsTimeout() {
+        menuVisible = true
+        controlsFocused = true
+        hideDelayMs = 5_000L
+        timerKey++
     }
 
     fun showSeekHint(text: String) {
@@ -143,10 +151,10 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
         hint = null
     }
 
-    LaunchedEffect(diagnosticsVisible, player.number) {
-        if (!diagnosticsVisible) return@LaunchedEffect
-        while (diagnosticsVisible) {
-            diagnosticSnapshot = PlaybackDiagnostics.snapshot()
+    LaunchedEffect(diagnosticsVisible, menuVisible, player.number) {
+        while (diagnosticsVisible || menuVisible) {
+            if (diagnosticsVisible) diagnosticSnapshot = PlaybackDiagnostics.snapshot()
+            positionTick++
             delay(250L)
         }
     }
@@ -277,9 +285,9 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                     Text("播放失败", color = PlayerHudText, fontSize = 24.sp)
                     Text(failure.message, color = PlayerHudMuted, fontSize = 18.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Button(onClick = { player.retry(); showMenu(5_000L, true) }) { Text("重新尝试") }
+                        Button(onClick = { player.retry(); renewControlsTimeout() }) { Text("重新尝试") }
                         if (failure.diagnostic?.canRefreshDevice == true) {
-                            TextButton(onClick = { player.retryWithFreshDevice(); showMenu(5_000L, true) }) {
+                            TextButton(onClick = { player.retryWithFreshDevice(); renewControlsTimeout() }) {
                                 Text("刷新匿名设备并重试", color = PlayerHudGreen)
                             }
                         }
@@ -322,7 +330,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                         TextButton(onClick = {
                             diagnosticsVisible = !diagnosticsVisible
                             if (diagnosticsVisible) diagnosticSnapshot = PlaybackDiagnostics.snapshot()
-                            showMenu(5_000L, true)
+                            renewControlsTimeout()
                         }) {
                             Text(if (diagnosticsVisible) "关闭诊断" else "播放诊断", color = PlayerHudGreen)
                         }
@@ -343,18 +351,18 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                             }.focusRequester(pauseFocus),
                             onClick = {
                                 player.togglePause()
-                                showMenu(5_000L, true)
+                                renewControlsTimeout()
                             }
                         ) {
                             Text(if (player.video.wantsToPlay && player.video.status != TimeControl.PAUSED) "暂停" else "播放")
                         }
                         TextButton(
                             modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
-                            onClick = { player.skip(-10.0); showSeekHint("−10s"); showMenu(5_000L, true) }
+                            onClick = { player.skip(-10.0); showSeekHint("−10s"); renewControlsTimeout() }
                         ) { Text("后退 10 秒", color = PlayerHudText) }
                         TextButton(
                             modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
-                            onClick = { player.skip(10.0); showSeekHint("+10s"); showMenu(5_000L, true) }
+                            onClick = { player.skip(10.0); showSeekHint("+10s"); renewControlsTimeout() }
                         ) { Text("快进 10 秒", color = PlayerHudText) }
                         TextButton(
                             modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
@@ -370,7 +378,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                                 val speeds = Player.speeds
                                 val index = speeds.indexOf(player.speed).coerceAtLeast(-1)
                                 player.chooseSpeed(speeds[(index + 1) % speeds.size])
-                                showMenu(5_000L, true)
+                                renewControlsTimeout()
                             }
                         ) { Text(if (player.speed == 1f) "倍速" else "${player.speed}×", color = PlayerHudText) }
                         if (player.qualities.isNotEmpty()) {
@@ -380,7 +388,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                                     val qualities = player.qualities
                                     val current = qualities.indexOf(player.quality).coerceAtLeast(-1)
                                     player.chooseQuality(qualities[(current + 1) % qualities.size])
-                                    showMenu(5_000L, true)
+                                    renewControlsTimeout()
                                 }
                             ) { Text(if (player.quality > 0) "${player.quality}P" else "清晰度", color = PlayerHudText) }
                         }
