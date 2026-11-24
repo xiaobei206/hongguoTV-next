@@ -798,6 +798,7 @@ private fun DetailScreen(
 @Composable
 private fun PlayerScreen(model: AppModel, exo: androidx.media3.exoplayer.ExoPlayer, onBack: () -> Unit) {
     val player = model.player
+    val failure = player.state as? PlayerState.Failed
     var speedIndex by remember { mutableIntStateOf(Player.speeds.indexOf(player.speed).coerceAtLeast(0)) }
     Column(
         Modifier.fillMaxSize().background(Color.Black).padding(18.dp),
@@ -825,6 +826,22 @@ private fun PlayerScreen(model: AppModel, exo: androidx.media3.exoplayer.ExoPlay
             update = { view -> if (view.player !== exo) view.player = exo },
             modifier = Modifier.fillMaxWidth().weight(1f)
         )
+        failure?.let { failed ->
+            Column(
+                Modifier.fillMaxWidth().background(TvPanel, RoundedCornerShape(10.dp)).padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("播放失败：${failed.message}", color = TvText, fontSize = 16.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(onClick = { player.retry() }) { Text("重新尝试") }
+                    if (failed.diagnostic?.canRefreshDevice == true) {
+                        TextButton(onClick = { player.retryWithFreshDevice() }) {
+                            Text("更换匿名设备重试", color = TvAccent)
+                        }
+                    }
+                }
+            }
+        }
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
