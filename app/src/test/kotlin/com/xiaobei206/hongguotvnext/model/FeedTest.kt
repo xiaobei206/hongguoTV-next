@@ -1,17 +1,21 @@
 package com.xiaobei206.hongguotvnext.model
 
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class FeedTest {
     @Test
     fun removesDuplicateIdsAndStopsWhenTheNextPageAddsNothing() = runTest {
         val first = Card(id = "series-1", title = "A")
-        val feed = Feed(backgroundScope) { cursor ->
+        var calls = 0
+        val feed = Feed(this) { cursor ->
+            calls++
             if (cursor.isEmpty()) {
                 FeedPage(listOf(first, first), cursor = "page-2", more = true)
             } else {
@@ -20,21 +24,27 @@ class FeedTest {
         }
 
         feed.loadMore()
-        advanceUntilIdle()
+        runCurrent()
+        assertEquals(1, calls)
         assertEquals(listOf("series-1"), feed.cards.map { it.id })
         assertTrue(feed.more)
 
         feed.loadMore()
-        advanceUntilIdle()
+        runCurrent()
+        assertEquals(2, calls)
         assertEquals(1, feed.cards.size)
         assertFalse("A page without new card IDs must stop automatic pagination", feed.more)
     }
 
     @Test
     fun staticFeedDoesNotRequestMorePages() = runTest {
-        val feed = Feed.of(backgroundScope, listOf(Card(id = "cached", title = "Cached")))
+        val feed = Feed(this, null).apply {
+            add(FeedPage(listOf(Card(id = "cached", title = "Cached"))))
+            started = true
+            more = false
+        }
         feed.loadMore()
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(1, feed.cards.size)
         assertFalse(feed.more)
