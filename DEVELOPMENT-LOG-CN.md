@@ -168,3 +168,13 @@
 - v0.1.4 的兼容代码已通过一轮完整 Android CI：SDK AAR、48 项应用单元测试、Android Lint、API 23 APK Manifest 门禁、x86_64/arm64-v8a/armeabi-v7a ABI 检查、测试 APK、正式签名 APK、证书与 SHA-256 校验均成功。
 - 新增独立 `.github/workflows/publish-v0.1.4.yml`，只会在带 `release: prepare v0.1.4 final` 标记且该提交仍是 main 最新提交时，下载本次成功 CI 的正式签名 Artifact，重新验证 SHA 与证书后发布 v0.1.4。
 - 最终标记提交会再次触发完整 Android CI；只有该次 CI 全部成功，Release 才会自动发布。真实电视安装与播放仍须用户在设备上验收。
+
+
+## 2026-11-25：v0.1.7 播放诊断图形与 VLC 管道稳定性
+
+- Stats for nerds 原有网络活动图使用当前窗口最大流量动态归一化，突发流量会压低其余柱形。改为固定 20 秒 / 40 个 500ms 槽位、固定参考刻度、平方根高度映射、分档颜色与动态扫描线；诊断文字和采集入口保持不变。
+- Android CI 对应的自维护 SDK 补丁修复 VLC 管道完成竞态：播放器读到 EOF 后，给 FFmpeg Wait 结果最多 500ms 的发布窗口，避免 channel goroutine 调度稍晚而误判 ErrStopped；真实提前关闭仍会取消 FFmpeg 并按停止处理。
+- VLC 管道回归测试连续执行 25 次，并检查播放器实际收到完整输出及 FFmpeg 参数。
+- 先前 v0.1.6 正式 Release 指向提交 `115eff6a260220f9b4c101bd2a713aa3f68b0c50`，不包含本次图形与 SDK 修复；本次按递增版本发布为 v0.1.7 / versionCode 8，不覆盖旧 Release。
+- v0.1.7 发布工作流只接受提交信息 `release: prepare v0.1.7 final`，并要求该提交仍是 main 最新提交；只有该提交对应的 Android CI 全部通过，才会上传正式签名 APK、SHA-256 与证书信息并创建 GitHub Release。
+- v0.1.6 的完整 CI 已通过；v0.1.7 的最终验证以带 release marker 的新一轮 Android CI 和发布工作流结果为准。
