@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build-test:
-    name: Unit tests, lint and universal debug APK
+    name: Unit tests, lint, ABI inspection and APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -28,6 +28,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Cache Gradle dependencies
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Configure the runner's Android SDK
         shell: bash
@@ -46,7 +49,6 @@ jobs:
       - name: Install compile SDK
         shell: bash
         run: |
-          # sdkmanager exits after the last license; `yes` may get SIGPIPE after success.
           set -eu
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
@@ -57,64 +59,164 @@ jobs:
         uses: gradle/actions/wrapper-validation@v4
 
       - name: Run unit tests
-        run: ./gradlew --no-daemon testDebugUnitTest
+        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
 
-      - name: Run lint and print the full report
-        shell: bash
-        run: |
-          set +e
-          ./gradlew --no-daemon lintDebug
-          result=$?
-          set -e
-          report="$(find app/build -type f -name 'lint-results-debug.txt' -print -quit)"
-          if [[ -n "$report" ]]; then
-            echo "Full lint report: $report"
-            cat "$report"
-          else
-            echo "Lint report file was not generated." >&2
-          fi
-          exit "$result"
+      - name: Run Android Lint
+        run: ./gradlew --no-daemon --stacktrace lintDebug
 
-      - name: Build Debug APKs
-        run: ./gradlew --no-daemon assembleDebug
+      - name: Build test-signed APKs
+        run: ./gradlew --no-daemon --stacktrace assembleDebug
 
-      - name: Check openhongguo AAR and packaged native libraries
+      - name: Inspect AAR native libraries and ABI APK outputs
         shell: bash
         run: |
           set -euo pipefail
-          echo "Resolved openhongguo AAR candidates:"
-          find "$HOME/.gradle/caches" -type f -name '*openhongguo*0.4.0*.aar' -print || true
-          echo "APK outputs:"
-          find app/build/outputs/apk/debug -type f -name '*.apk' -print
-          echo "Native libraries packaged in APK outputs (empty can mean the SDK has no JNI dependencies):"
-          while IFS= read -r apk; do
-            echo "== $apk =="
-            unzip -l "$apk" | grep -E 'lib/(x86_64|arm64-v8a|armeabi-v7a)/.*\.so$' || true
-          done < <(find app/build/outputs/apk/debug -type f -name '*.apk')
+          echo "Resolved AARs containing native libraries (includes transitive runtime dependencies):"
+          found_native=false
+          while IFS= read -r -d '' aar; do
+            native_entries="$(unzip -Z1 "$aar" | grep -E '^jni/[^/]+/.*\.so$' || true)"
+            if [[ -n "$native_entries" ]]; then
+              found_native=true
+              echo "== $aar =="
+              printf '%s\n' "$native_entries"
+            fi
+          done < <(find "$HOME/.gradle/caches/modules-2/files-2.1" -type f -name '*.aar' -print0)
+          if [[ "$found_native" == false ]]; then
+            echo "No JNI .so files were found in the resolved AAR cache."
+          fi
 
-      - name: Prepare test-signed universal APK and SHA-256
+          echo "Debug APK outputs:"
+          find app/build/outputs/apk/debug -type f -name '*.apk' -print
+          for abi in x86_64 arm64-v8a armeabi-v7a; do
+            apk="$(find "app/build/outputs/apk/debug/$abi" -type f -name '*.apk' -print -quit 2>/dev/null || true)"
+            if [[ -z "$apk" ]]; then
+              echo "::error::No APK output found for requested ABI $abi"
+              exit 1
+            fi
+            echo "ABI $abi: $apk"
+            unzip -l "$apk" | grep -E "lib/$abi/.*\.so$" || true
+          done
+
+          echo "Universal APK outputs:"
+          find app/build/outputs/apk/debug -type f -iname '*universal*.apk' -print
+
+      - name: Prepare APK, certificate details and SHA-256
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dist
-          apk="$(find app/build/outputs/apk/debug -type f -name '*universal*.apk' -print -quit)"
+          apk="$(find app/build/outputs/apk/debug -type f -iname '*universal*.apk' -print -quit)"
           if [[ -z "$apk" ]]; then
-            apk="$(find app/build/outputs/apk/debug -type f -name 'app-debug.apk' -print -quit)"
-          fi
-          if [[ -z "$apk" ]]; then
-            echo "Could not locate a universal or non-split debug APK." >&2
+            echo "Could not locate the universal debug APK." >&2
             exit 1
           fi
-          cp "$apk" "dist/hongguoTV-next-v0.1.0-universal-test-signed.apk"
-          (cd dist && sha256sum hongguoTV-next-v0.1.0-universal-test-signed.apk > hongguoTV-next-v0.1.0-SHA256SUMS.txt)
-          cat dist/hongguoTV-next-v0.1.0-SHA256SUMS.txt
+          output="hongguoTV-next-v0.1.0-universal-test-signed.apk"
+          cp "$apk" "dist/$output"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.0-test-certificate.txt"
+          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.0-SHA256SUMS.txt)
+          cat "dist/hongguoTV-next-v0.1.0-SHA256SUMS.txt"
+          cat "dist/hongguoTV-next-v0.1.0-test-certificate.txt"
 
-      - name: Upload APK and checksums
+      - name: Upload test APK and checksums
         uses: actions/upload-artifact@v4
         with:
           name: hongguoTV-next-v0.1.0-test-apk
           path: |
             dist/hongguoTV-next-v0.1.0-universal-test-signed.apk
             dist/hongguoTV-next-v0.1.0-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.0-test-certificate.txt
           if-no-files-found: error
           retention-days: 30
+
+      - name: Prepare optional release signing inputs in repository root
+        id: release-signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=0
+          for value in "$ANDROID_KEYSTORE_BASE64" "$ANDROID_KEYSTORE_PASSWORD" "$ANDROID_KEY_ALIAS" "$ANDROID_KEY_PASSWORD"; do
+            if [[ -n "$value" ]]; then count=$((count + 1)); fi
+          done
+
+          if [[ "$count" -eq 0 ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Release signing secrets are not configured; only the clearly marked test-signed APK will be produced."
+            exit 0
+          fi
+          if [[ "$count" -ne 4 ]]; then
+            echo "::error::Release signing is partially configured. Set all four required GitHub Actions Secrets or leave all four empty."
+            exit 1
+          fi
+
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$GITHUB_WORKSPACE/hongguoTV-next-release.jks"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          def escape_property(value: str) -> str:
+              return (value.replace("\\", "\\\\")
+                      .replace("\n", "\\n")
+                      .replace("\r", "\\r")
+                      .replace("\t", "\\t")
+                      .replace(" ", "\\ ")
+                      .replace("=", "\\=")
+                      .replace(":", "\\:")
+                      .replace("#", "\\#")
+                      .replace("!", "\\!"))
+
+          values = {
+              "ANDROID_KEYSTORE_PASSWORD": os.environ["ANDROID_KEYSTORE_PASSWORD"],
+              "ANDROID_KEY_ALIAS": os.environ["ANDROID_KEY_ALIAS"],
+              "ANDROID_KEY_PASSWORD": os.environ["ANDROID_KEY_PASSWORD"],
+          }
+          path = Path(os.environ["GITHUB_WORKSPACE"]) / "signing-secrets.txt"
+          path.write_text("".join(f"{k}={escape_property(v)}\n" for k, v in values.items()), encoding="utf-8")
+          path.chmod(0o600)
+          PY
+          chmod 600 "$GITHUB_WORKSPACE/hongguoTV-next-release.jks"
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build formally signed release APKs
+        if: steps.release-signing.outputs.enabled == 'true'
+        run: ./gradlew --no-daemon --stacktrace assembleRelease
+
+      - name: Verify formal release certificate and SHA-256
+        if: steps.release-signing.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$(find app/build/outputs/apk/release -type f -iname '*universal*.apk' -print -quit)"
+          if [[ -z "$apk" ]]; then
+            echo "Could not locate the universal release APK." >&2
+            exit 1
+          fi
+          output="hongguoTV-next-v0.1.0-universal-release-signed.apk"
+          cp "$apk" "dist/$output"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.0-release-certificate.txt"
+          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.0-RELEASE-SHA256SUMS.txt)
+          cat "dist/hongguoTV-next-v0.1.0-RELEASE-SHA256SUMS.txt"
+          cat "dist/hongguoTV-next-v0.1.0-release-certificate.txt"
+
+      - name: Upload formally signed release APK
+        if: steps.release-signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.0-formal-release
+          path: |
+            dist/hongguoTV-next-v0.1.0-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.0-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.0-release-certificate.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove temporary signing materials
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$GITHUB_WORKSPACE/hongguoTV-next-release.jks"
+          rm -f "$GITHUB_WORKSPACE/signing-secrets.txt"

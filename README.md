@@ -24,7 +24,9 @@
 
 Windows PowerShell 使用 `.gradlew.bat testDebugUnitTest lintDebug assembleDebug`。
 
-CI 在每次 main 分支变更时运行单元测试、Lint 与 Debug 构建；Debug APK 使用 Android Debug 测试证书，并通过 Workflow Artifact 提供下载。测试签名 APK 不等于正式发布签名，也不保证能够覆盖安装未来正式签名版本。
+CI 将单元测试、Android Lint、Debug 构建分成独立步骤，并使用 Gradle 缓存；Debug APK 使用 Android Debug 测试证书，通过 Workflow Artifact 提供下载。测试签名 APK 不等于正式发布签名，也不保证能够覆盖安装未来正式签名版本。
+
+若在 GitHub Actions Secrets 配齐四项正式签名 Secret，CI 还会从仓库根目录安全还原独立发布 JKS，构建并验证正式签名 Release APK，输出证书指纹与 SHA-256，并在结束后删除临时密钥文件。四项全部未配置时只生成测试签名版本；只配置其中一部分会明确失败。
 
 ## ABI
 

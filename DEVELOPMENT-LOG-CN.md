@@ -26,3 +26,12 @@
 - x86_64 模拟器安装、ARM64 电视安装/解码、遥控器长时间焦点行为、实际播放流与接力跨设备通信：尚未通过真机/模拟器验证。
 - 正式发布密钥暂未配置。Debug 测试构建与正式签名更新路径是两回事。
 - 下一步重点：观察首轮 CI，修复任何构建/单测问题；验证 ABI；补全返回焦点/滚动位置恢复、后台预载调度与性能观察；真机测试接力和 CENC 播放；再创建真实的测试 Release 与 SHA-256。
+
+
+## 2026-11-24：CI 故障可观测性与可选正式签名
+
+- 第 12 次 Actions 的组合 `testDebugUnitTest lintDebug` 步骤长时间未给出可读日志/终态，因此不把该运行作为成功或失败依据；后续 workflow 将测试、Lint 拆开，避免两类任务互相遮蔽结果。
+- 新 workflow 使用官方 Gradle setup action 缓存依赖；SDK/Wrapper 检查仍单独执行。
+- 加入完整的 AAR JNI 条目盘点、三个目标 ABI 单独 APK 输出检查、Universal APK 验证、测试证书信息与 SHA-256 文件。
+- CI 正式签名设计为可选但严格：四个 Secrets 全空时只出测试签名包；部分配置时报错；四项齐全时将 JKS 与 `signing-secrets.txt` 安全还原到仓库根目录，调用与本地一致的 Gradle release signing，验证证书并计算 SHA-256；临时文件始终在结束步骤清理，且不上传到 Artifact。
+- 截止本日志条目，以上 workflow 变更已提交，必须以新一次 Actions 的最终结果验证。APK/Release/SHA 尚未宣称成功。
