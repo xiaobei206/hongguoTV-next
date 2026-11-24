@@ -16,7 +16,7 @@
 - 迁移开心果的 `AppModel`、`Card`、`Catalog`、`Danmaku`、`Feed`、`PlaybackFailure`、`Player`、`Seasons`、`SeriesPage`、`Session`、`Store`、`CoverStore`、`Cenc`、`ExoVideo`、`PlaybackDiagnostics`、`PlaybackService` 和 `Streams`，包名全部改为新版命名空间。
 - 迁移旧 TV 的 `TvHandoffServer` 与 `PhoneDiagnosticClient`；没有改动旧 TV 仓库。没有将开心果手机端的 `PhoneDiagnosticReceiver` 错当作 TV 端服务启动。
 - 接入 Compose 浏览流程，覆盖首页、榜单、新剧、搜索、收藏、历史、影视详情、选集、播放操作、设备接力、诊断与设置。首批数据到达即可显示，Feed 采用去重/独立状态并按两屏目标补载；开始播放时取消 Feed 和在途封面加载。
-- 为 Feed 分页和 TCP JSON 接力协议加入单元测试；迁移开心果已有 CENC、Catalog、弹幕、播放失败与 Session 测试。
+- 为 Feed 分页和 TCP JSON 接力协议加入单元测试；迁移开心果已有 CENC、Catalog、弹幕、播放失败与 Session 测试。SessionTest 同时验证原有按 Tab 保存页面路径的 Router，因此继续迁移该纯状态路由模型，不搬入手机 UI；TV 主导航目前仍是独立的 TvTab/TvScreen，后续应统一 session 恢复与 TV 焦点/滚动恢复逻辑。
 
 ### 验证与未解决项
 - Git 仓库审计、文件迁移及提交：已执行。
