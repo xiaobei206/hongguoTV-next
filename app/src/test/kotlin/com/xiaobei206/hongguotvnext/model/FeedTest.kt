@@ -38,11 +38,7 @@ class FeedTest {
 
     @Test
     fun staticFeedDoesNotRequestMorePages() = runTest {
-        val feed = Feed(this, null).apply {
-            add(FeedPage(listOf(Card(id = "cached", title = "Cached"))))
-            started = true
-            more = false
-        }
+        val feed = Feed.of(this, listOf(Card(id = "cached", title = "Cached")))
         feed.loadMore()
         runCurrent()
 
