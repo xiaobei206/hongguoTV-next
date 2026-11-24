@@ -952,6 +952,8 @@ for path in (
     "sdk/catalog_test.go",
     "bindings/internal/dispatch/dispatch.go",
     "bindings/internal/dispatch/dispatch_test.go",
+    "internal/media/play.go",
+    "internal/media/play_test.go",
 ):
     subprocess.run(["gofmt", "-w", str(ROOT / path)], check=True)
 
