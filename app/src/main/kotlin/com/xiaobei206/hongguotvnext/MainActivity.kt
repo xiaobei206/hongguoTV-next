@@ -30,6 +30,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -75,6 +77,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,6 +92,7 @@ import com.xiaobei206.hongguotvnext.model.PlayerState
 import com.xiaobei206.hongguotvnext.model.Watch
 import com.xiaobei206.hongguotvnext.model.dayLabel
 import com.xiaobei206.hongguotvnext.model.todayKey
+import com.xiaobei206.hongguotvnext.model.seasonLabel
 import com.xiaobei206.hongguotvnext.playback.PlaybackDiagnostics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -179,6 +183,7 @@ class MainActivity : ComponentActivity() {
                             seriesId = detailId,
                             covers = tvApp.covers,
                             onBack = { screen = TvScreen.BROWSE },
+                            onSelectSeason = { seasonId -> detailId = seasonId },
                             onPlay = { id, episode, position ->
                                 model.cancelBackgroundFeeds()
                                 tvApp.covers.cancelPendingLoads()
@@ -813,6 +818,7 @@ private fun DetailScreen(
     seriesId: String,
     covers: com.xiaobei206.hongguotvnext.covers.CoverStore,
     onBack: () -> Unit,
+    onSelectSeason: (String) -> Unit,
     onPlay: (String, Int, Double) -> Unit
 ) {
     val page = model.seriesPage(seriesId)
@@ -860,6 +866,71 @@ private fun DetailScreen(
         }
 
         Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            val seasons = page.seasons.orEmpty()
+            if (seasons.size > 1) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("同系列", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("${seasons.size} 季", color = TvMuted, fontSize = 14.sp)
+                }
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(end = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(seasons, key = { it.seriesId }) { season ->
+                        val selected = season.seriesId == seriesId
+                        var focused by remember(season.seriesId) { mutableStateOf(false) }
+                        Surface(
+                            modifier = Modifier.width(178.dp).height(70.dp)
+                                .onFocusChanged { focused = it.isFocused }
+                                .clickable(enabled = season.episodeCount > 0) {
+                                    if (!selected) onSelectSeason(season.seriesId)
+                                }
+                                .focusable(enabled = season.episodeCount > 0),
+                            shape = RoundedCornerShape(10.dp),
+                            color = when {
+                                selected -> TvAccent
+                                focused -> TvPanelRaised
+                                else -> TvPanel
+                            },
+                            border = when {
+                                focused -> BorderStroke(2.dp, Color.White)
+                                selected -> BorderStroke(1.dp, TvAccent)
+                                else -> null
+                            }
+                        ) {
+                            Column(
+                                Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 7.dp),
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    seasonLabel(season),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selected) TvBackground else TvText
+                                )
+                                Text(
+                                    season.title,
+                                    fontSize = 11.sp,
+                                    color = if (selected) Color(0xFF354526) else TvMuted,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    if (season.episodeCount > 0) "${season.episodeCount} 集" else "暂未更新",
+                                    fontSize = 11.sp,
+                                    color = if (selected) Color(0xFF354526) else TvMuted
+                                )
+                            }
+                        }
+                    }
+                }
+            } else if (series?.isMultiSeason == true && page.seasons == null) {
+                Text("正在获取同系列季信息…", fontSize = 14.sp, color = TvMuted)
+            }
             Text("选集", fontSize = 31.sp, fontWeight = FontWeight.Bold)
             when {
                 page.loading && page.episodes.isEmpty() -> Text("正在加载详情和选集…", color = TvMuted)

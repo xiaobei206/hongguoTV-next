@@ -1,5 +1,7 @@
 # 红果 TV Next
 
+> 当前开发版本：**v0.1.6**。详情页新增“同系列”季数栏，可从任意一季直接切换到同系列其他季；v0.1.5 的封面修复继续包含在内。发布包以 [GitHub Releases](https://github.com/xiaobei206/hongguoTV-next/releases) 为准，CI/实机验收状态以对应记录为准。
+
 独立的新一代 Android TV 客户端。所有新版开发仅写入本仓库；旧版 [hongguoTV](https://github.com/xiaobei206/hongguoTV) 保持只读，手机/平板项目 [kaixinguo-android](https://github.com/xiaobei206/kaixinguo-android) 是核心架构参考。
 
 ## 系统兼容目标

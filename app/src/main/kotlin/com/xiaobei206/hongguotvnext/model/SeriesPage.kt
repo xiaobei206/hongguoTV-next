@@ -33,7 +33,8 @@ class SeriesPage internal constructor(val id: String) {
      */
     var seasons by mutableStateOf<List<Season>?>(null)
         internal set
-    internal var seasonsLoading = false
+    var seasonsLoading by mutableStateOf(false)
+        internal set
 
     fun episode(n: Int): Episode? {
         // The list comes in order, so the nth is nearly always at n - 1.
