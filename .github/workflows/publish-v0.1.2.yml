@@ -14,7 +14,23 @@ jobs:
     if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && contains(github.event.workflow_run.head_commit.message, 'release: prepare v0.1.2 final') }}"
     runs-on: ubuntu-latest
     steps:
+      - name: Ensure this is still the latest main commit
+        id: current-head
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          if [[ "$current" == "$TARGET_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale release candidate $TARGET_SHA; main is now $current."
+          fi
+
       - name: Download signed APK from the successful CI run
+        if: steps.current-head.outputs.current == 'true'
         uses: actions/download-artifact@v4
         with:
           name: hongguoTV-next-v0.1.2-formal-release
@@ -23,6 +39,7 @@ jobs:
           path: dist
 
       - name: Verify release assets
+        if: steps.current-head.outputs.current == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -34,6 +51,7 @@ jobs:
           ls -lh dist/
 
       - name: Publish GitHub Release
+        if: steps.current-head.outputs.current == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.1.2
