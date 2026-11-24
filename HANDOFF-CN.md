@@ -34,7 +34,7 @@
 
 ## 签名状态
 - 新版独立签名密钥已实际创建并提交于仓库根目录：`hongguoTV-next-release.jks`；对应配置在根目录 `signing-secrets.txt`。CI 已改为优先读取这两份文件，且已通过正式签名构建。
-- 本地密钥与配置文件应放项目根目录：`hongguoTV-next-release.jks`、`signing-secrets.txt`；两个文件由 `.gitignore` 排除。
+- 本项目按自用约定将 `hongguoTV-next-release.jks`、`signing-secrets.txt` 实际保留在仓库根目录并提交；CI 使用它们签名，Artifact 不包含密钥文件。
 - 正式签名当前直接使用仓库根目录文件，不需配置 GitHub Actions Secrets；备用 Secrets 名称仍保留在 Workflow 中。
 - CI 输出 Debug 测试签名 APK 与正式签名 Release APK。两者证书不同；测试版不能直接覆盖安装正式签名版。
 
