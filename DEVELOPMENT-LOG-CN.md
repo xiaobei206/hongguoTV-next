@@ -1,23 +1,27 @@
 # 开发日志（持续累积）
 
-## 2026-11-24：仓库审计与基础工程启动
+## 2026-11-24：仓库审计、工程基础与核心迁移
 
 ### 仓库审计
-- `hongguoTV-next` 是空的公开仓库，默认分支为 `main`；后续所有新版提交只写入该仓库。
-- `kaixinguo-android` 与旧 `hongguoTV` 都包含要求检查的核心 Kotlin 文件与测试目录。
-- 开心果项目 Gradle version catalog 当前使用 AGP 9.5.1、Kotlin 2.4.21、Compose BOM 2026.09.00、Media3 1.11.1、openhongguo 0.4.0、Gradle Wrapper 9.8.2；新版先以这组已在参考项目中使用的版本为基线，构建结果再决定是否调整。
-- 开心果的 `Feed` 已有卡片 ID 去重、独立分页游标、加载状态、失败退避和“无新增内容停止继续翻页”逻辑；`AppModel` 将首页缓存先展示，再由网络结果刷新。后续迁移优先保留这些语义，而非另造一套数据模型。
-- 开心果 `CoverStore` 已包含内存 LRU、磁盘 JPEG、URL 任务去重和限流 IO；播放器基于 Media3 ExoPlayer，并通过 `StreamRegistry` / `CencDataSource` 接入 CENC 流。
-- 旧 TV 的接力服务通过 NSD 广告 `_hongguotv._tcp.`，TCP JSON 协议版本为 1；请求字段含 `type=play`、`transferId`、`targetDeviceId`、`seriesId`、`episode`、`positionMs`。这将作为兼容实现的协议基准，尚未在新版中验证。
-- 两个参考公开仓库当前树中均有根目录 JKS 与签名配置文件。新版不会复制这些凭据，发布密钥必须独立、私有且固定。
+- `hongguoTV-next` 初始为空仓库，默认分支为 `main`；新版所有写入仅发生在该仓库。
+- `kaixinguo-android` 与旧 `hongguoTV` 均包含要求核查的主要模型、播放、CENC、缓存和诊断/接力代码。旧版主 UI 真实入口仍是大型 `MainActivity.kt` 和 RecyclerView adapter 流程，不能因 UI 目录存在就认为它运行中。
+- 开心果项目 Gradle version catalog 使用 AGP 9.5.1、Kotlin 2.4.21、Compose BOM 2026.09.00、Activity 1.13.0、Core 1.19.1、lifecycle 2.11.0、Media3 1.11.1、openhongguo 0.4.0、coroutines 1.11.0、JUnit 4.13.2、org.json 20250517；Gradle Wrapper 9.8.2。新版先以此参考项目实际使用的版本作基线。
+- 开心果的 `Feed` 具备 ID 去重、独立游标、加载/错误状态、退避重试及首页缓存恢复；`AppModel` 分别缓存首页、榜单、新剧和搜索 Feed。新版本沿用这些模型与状态语义，而非另造一套数据访问层。
+- `CoverStore` 包含 96 MiB 内存 LRU、磁盘缩放 JPEG、同 URL 请求共享与并发 IO 限制。播放核心由 Media3 ExoPlayer、`StreamRegistry`、`CencDataSource` 和 CENC 解密组成。
+- 旧 TV 服务在 NSD 上广播 `_hongguotv._tcp.`，TCP 一行一个 JSON，协议版本 1。播放请求字段：`protocol`、`type=play`、`transferId`、`targetDeviceId`、`seriesId`、`episode`、`positionMs`；回复字段：`protocol`、`transferId`、`accepted`、`message`、`deviceId`。服务在 Activity 前台期间发布可用状态，接力回复等待实际 Player 状态。此协议现在已提取纯编解码器并补充单元测试，仍需要真机互通验证。
+- 两个参考公开仓库目前都有被跟踪的根目录 JKS/签名配置。新版不复制或继承其中任何密钥，使用独立签名配置；私密签名材料在新版由 `.gitignore` 排除。
 
-### 本阶段修改
-- 创建独立工程的基础 Gradle 配置、Compose TV shell、Manifest、中文项目文档和 GitHub Actions 骨架。
-- 签名读取路径固定使用 `rootProject.file(...)`；签名输入不完整时明确报错，不以 Debug 签名冒充正式签名。
-- 测试构建不要求预先提供正式签名凭据。
+### 本阶段提交内容
+- 独立工程、Gradle Wrapper/版本目录、TV Manifest、根目录签名配置读取、`.gitignore`、CI 及中文文档。
+- 迁移开心果的 `AppModel`、`Card`、`Catalog`、`Danmaku`、`Feed`、`PlaybackFailure`、`Player`、`Seasons`、`SeriesPage`、`Session`、`Store`、`CoverStore`、`Cenc`、`ExoVideo`、`PlaybackDiagnostics`、`PlaybackService` 和 `Streams`，包名全部改为新版命名空间。
+- 迁移旧 TV 的 `TvHandoffServer` 与 `PhoneDiagnosticClient`；没有改动旧 TV 仓库。没有将开心果手机端的 `PhoneDiagnosticReceiver` 错当作 TV 端服务启动。
+- 接入 Compose 浏览流程，覆盖首页、榜单、新剧、搜索、收藏、历史、影视详情、选集、播放操作、设备接力、诊断与设置。首批数据到达即可显示，Feed 采用去重/独立状态并按两屏目标补载；开始播放时取消 Feed 和在途封面加载。
+- 为 Feed 分页和 TCP JSON 接力协议加入单元测试；迁移开心果已有 CENC、Catalog、弹幕、播放失败与 Session 测试。
 
-### 验证记录
-- 仓库与文件审计：已完成部分入口核查。
-- 自动构建：待新 workflow 执行。
-- Feed、ABI 与投屏协议测试：待迁移后补齐。
-- 模拟器及真实电视：尚未运行。
+### 验证与未解决项
+- Git 仓库审计、文件迁移及提交：已执行。
+- Gradle 构建、依赖解析、Lint 与测试：必须等待 Actions 的实际结果，不在源码提交后预先宣称通过。
+- `openhongguo` AAR 的 JNI/ABI：CI 会检查解析到的 AAR 候选和 APK 内原生库目录；仍须检查具体结果。
+- x86_64 模拟器安装、ARM64 电视安装/解码、遥控器长时间焦点行为、实际播放流与接力跨设备通信：尚未通过真机/模拟器验证。
+- 正式发布密钥暂未配置。Debug 测试构建与正式签名更新路径是两回事。
+- 下一步重点：观察首轮 CI，修复任何构建/单测问题；验证 ABI；补全返回焦点/滚动位置恢复、后台预载调度与性能观察；真机测试接力和 CENC 播放；再创建真实的测试 Release 与 SHA-256。
