@@ -69,6 +69,7 @@ private val PlayerHudMuted = Color(0xFFB7C0CC)
 @Composable
 internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit) {
     val player = model.player
+    val positionTickForUi = positionTick
     val context = LocalContext.current
     val rootFocus = remember { FocusRequester() }
     val pauseFocus = remember { FocusRequester() }
@@ -324,7 +325,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                                 fontSize = 19.sp
                             )
                             Text(
-                                "第 ${player.number} 集  ·  ${player.video.position.toTimeLabel()} / ${player.video.duration.toTimeLabel()}  ·  ${if (player.video.status == TimeControl.PLAYING) "播放中" else if (player.video.status == TimeControl.WAITING) "缓冲中" else "已暂停"}",
+                                "第 ${player.number} 集  ·  ${positionTickForUi.let { player.video.position.toTimeLabel() }} / ${player.video.duration.toTimeLabel()}  ·  ${if (player.video.status == TimeControl.PLAYING) "播放中" else if (player.video.status == TimeControl.WAITING) "缓冲中" else "已暂停"}",
                                 color = PlayerHudMuted,
                                 fontSize = 13.sp
                             )
