@@ -3,7 +3,7 @@
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
 - **版本：** `0.1.2`（搜索热榜、日期标签、电视播放遥控与播放诊断）
-- **发布候选标记：** `release: prepare v0.1.2 final`；仅当该候选仍是 `main` 最新提交且 Android CI、正式签名与 SHA-256 校验全部成功时发布。
+- **发布候选标记：** `release: prepare v0.1.2 final`；该提交的 Android CI、正式签名与 SHA-256 校验均已成功，Release 已发布。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
@@ -24,7 +24,7 @@
 
 ## 构建与测试现状
 - 当前工程版本为 `0.1.2`，使用独立 applicationId，可与旧版并行安装。
-- [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533) 全部成功：单测、Lint、Debug APK、ABI 检查、正式 Release APK、签名证书验证及 SHA-256。
+- [v0.1.2 正式构建](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45389071879) 全部成功：单测、Lint、Debug APK、ABI 检查、正式 Release APK、签名证书验证及 SHA-256。早期基线 [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533) 作为 v0.1.0 历史记录保留。
 - Actions 已将测试与 Lint 分成独立步骤并加入 Gradle 缓存；完整配置可选的四个签名 Secrets 后可走正式签名 Artifact 路径。
 - 开心果的数据模型、Feed、存储、播放/CENC、封面缓存及核心测试已迁移；实际构建结果以 [Actions](https://github.com/xiaobei206/hongguoTV-next/actions) 为准。
 - v0.1.2 的遥控器映射已实现但尚未真机验收：菜单隐藏时左右快退/快进、上下切集；OK 首次唤出菜单，下一次暂停并聚焦播放按钮；控制栏可导航；菜单超时后不再组合任何控制按钮。
