@@ -458,7 +458,6 @@ private fun StatsForNerds(
             Text("STATS FOR NERDS", color = Color.White, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
             Text("CURRENT / OPTIMAL RES  ${resolution}${if (fps == "—") "" else " · $fps"} / $optimalResolution", color = PlayerHudGreen, fontSize = 12.sp)
             Text("CODECS  ${snapshot.videoCodec.ifBlank { player.selectedCodec.ifBlank { "—" } }}${snapshot.audioCodec.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()}", color = PlayerHudGreen, fontSize = 12.sp)
-            Text("DECODER  ${snapshot.decoderName.ifBlank { "—" }}  ·  ${when (snapshot.decoderHardware) { true -> "HARDWARE"; false -> "SOFTWARE"; null -> "—" }}", color = PlayerHudGreen, fontSize = 12.sp)
             Text("DECODER  ${snapshot.decoderName.ifBlank { "WAITING FOR DECODER" }} · ${when (snapshot.decoderHardware) { true -> "HARDWARE"; false -> "SOFTWARE"; null -> "—" }}", color = PlayerHudGreen, fontSize = 12.sp)
             Text("BITRATE  ${if (snapshot.bitrate > 0) String.format(Locale.ROOT, "%.2f Mbps", bitrateMbps) else "—"}    CONNECTION SPEED  ${if (snapshot.connectionSpeedBps > 0L) String.format(Locale.ROOT, "%.2f Mbps", networkMbps) else "WAITING"}", color = PlayerHudGreen, fontSize = 12.sp)
             Text("NETWORK ACTIVITY · LAST 20 SECONDS", color = Color.White.copy(alpha = 0.82f), fontSize = 10.sp)
