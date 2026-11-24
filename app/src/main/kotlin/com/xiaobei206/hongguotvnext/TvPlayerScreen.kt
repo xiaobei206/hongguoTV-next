@@ -78,6 +78,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
 
     var menuVisible by remember { mutableStateOf(true) }
     var controlsFocused by remember { mutableStateOf(false) }
+    var episodeKeyHeld by remember { mutableStateOf(false) }
     var hideDelayMs by remember { mutableLongStateOf(650L) }
     var timerKey by remember { mutableLongStateOf(0L) }
     var backArmedUntil by remember { mutableLongStateOf(0L) }
@@ -171,11 +172,9 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
             .onFocusChanged { if (it.isFocused && menuVisible) controlsFocused = false }
             .focusable()
             .onPreviewKeyEvent { event ->
-                if (event.type == KeyEventType.KeyUp &&
-                    (event.key == Key.DirectionUp || event.key == Key.DirectionDown)
-                ) {
+                if (event.type == KeyEventType.KeyUp && (event.key == Key.DirectionUp || event.key == Key.DirectionDown)) {
                     episodeKeyHeld = false
-                    return@onPreviewKeyEvent false
+                    return@onPreviewKeyEvent true
                 }
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (event.key) {
@@ -209,40 +208,38 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                     }
                     Key.DirectionUp -> {
                         if (episodeKeyHeld) true
-                        else if (menuVisible && !controlsFocused) {
+                        else {
                             episodeKeyHeld = true
-                            showMenu(5_000L, focusControls = true)
-                            true
-                        } else if (menuVisible && controlsFocused) {
-                            // Let Compose move focus within the visible control row.
-                            false
-                        } else if (player.hasPrevious) {
-                            episodeKeyHeld = true
-                            player.step(-1)
-                            true
-                        } else {
-                            episodeKeyHeld = true
-                            showSeekHint("已经是第一集")
-                            true
+                            if (menuVisible && !controlsFocused) {
+                                showMenu(5_000L, focusControls = true)
+                                true
+                            } else if (menuVisible && controlsFocused) {
+                                false
+                            } else if (player.hasPrevious) {
+                                player.step(-1)
+                                true
+                            } else {
+                                showSeekHint("已经是第一集")
+                                true
+                            }
                         }
                     }
                     Key.DirectionDown -> {
                         if (episodeKeyHeld) true
-                        else if (menuVisible && !controlsFocused) {
+                        else {
                             episodeKeyHeld = true
-                            showMenu(5_000L, focusControls = true)
-                            true
-                        } else if (menuVisible && controlsFocused) {
-                            // Let Compose move focus within the visible control row.
-                            false
-                        } else if (player.hasNext) {
-                            episodeKeyHeld = true
-                            player.step(1)
-                            true
-                        } else {
-                            episodeKeyHeld = true
-                            showSeekHint("已经是最后一集")
-                            true
+                            if (menuVisible && !controlsFocused) {
+                                showMenu(5_000L, focusControls = true)
+                                true
+                            } else if (menuVisible && controlsFocused) {
+                                false
+                            } else if (player.hasNext) {
+                                player.step(1)
+                                true
+                            } else {
+                                showSeekHint("已经是最后一集")
+                                true
+                            }
                         }
                     }
                     Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
