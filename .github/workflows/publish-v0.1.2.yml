@@ -11,9 +11,26 @@ permissions:
 
 jobs:
   publish:
-    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && contains(github.event.workflow_run.head_commit.message, 'release: prepare v0.1.2 final') }}"
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}"
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout the exact Android CI source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check whether this commit is the final release marker
+        id: release-marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log -1 --format=%B | grep -Fq 'release: prepare v0.1.2 final'; then
+            echo "matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches=false" >> "$GITHUB_OUTPUT"
+            echo "This successful CI run is not the final v0.1.2 release candidate."
+          fi
+
       - name: Ensure this is still the latest main commit
         id: current-head
         shell: bash
@@ -30,7 +47,7 @@ jobs:
           fi
 
       - name: Download signed APK from the successful CI run
-        if: steps.current-head.outputs.current == 'true'
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
         uses: actions/download-artifact@v4
         with:
           name: hongguoTV-next-v0.1.2-formal-release
