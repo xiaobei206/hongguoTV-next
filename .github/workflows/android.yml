@@ -46,7 +46,8 @@ jobs:
       - name: Install compile SDK
         shell: bash
         run: |
-          set -euo pipefail
+          # sdkmanager exits after the last license; `yes` may get SIGPIPE after success.
+          set -eu
           yes | sdkmanager --licenses >/dev/null
           sdkmanager --install "platforms;android-37" "build-tools;37.0.0" "platform-tools"
 
