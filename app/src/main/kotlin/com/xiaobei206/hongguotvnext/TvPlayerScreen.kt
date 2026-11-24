@@ -265,7 +265,11 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
         // This is an informational overlay, intentionally independent of the
         // controls HUD: it stays visible until toggled off, like Stats for nerds.
         if (diagnosticsVisible) {
-            StatsForNerds(snapshot = diagnosticSnapshot, player = player)
+            StatsForNerds(
+                modifier = Modifier.align(Alignment.TopStart).padding(24.dp).width(390.dp),
+                snapshot = diagnosticSnapshot,
+                player = player
+            )
         }
 
         hint?.let {
@@ -417,13 +421,14 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
 
 @Composable
 private fun StatsForNerds(
+    modifier: Modifier = Modifier,
     snapshot: PlaybackDiagnostics.Snapshot,
     player: Player
 ) {
     val networkMbps = snapshot.connectionSpeedBps / 1_000_000.0
     val bitrateMbps = snapshot.bitrate / 1_000_000.0
     Surface(
-        modifier = Modifier.padding(24.dp).width(390.dp).align(Alignment.TopStart),
+        modifier = modifier,
         color = Color(0xE8000000),
         shape = RoundedCornerShape(10.dp)
     ) {
