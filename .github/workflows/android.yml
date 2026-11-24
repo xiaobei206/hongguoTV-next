@@ -114,7 +114,12 @@ jobs:
               exit 1
             fi
             printf 'ABI %s libraries:\n%s\n' "$abi" "$abi_entries"
-            if ! printf '%s\n' "$abi_entries" | grep -q '/libgojni\.so
+            if ! printf '%s\n' "$abi_entries" | grep -q '/libgojni\.so$'; then
+              echo "::error::openhongguo libgojni.so is missing for $abi"
+              exit 1
+            fi
+          done
+          echo "All three target ABIs and openhongguo libgojni.so are present in the universal APK."
       - name: Prepare APK, certificate details and SHA-256
         shell: bash
         run: |

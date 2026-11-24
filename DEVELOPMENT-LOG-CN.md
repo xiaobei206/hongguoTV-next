@@ -57,3 +57,9 @@
 - ABI 检查脚本此前错误地要求三个独立 ABI 子目录 APK，导致脚本失败，未能进入 checksum/artifact 上传。Gradle 此次实际只产出 Universal APK，因此检查改为读取 APK ZIP 内的真实路径，要求三个 ABI 的 .so 文件均存在，并分别要求 openhongguo 的 `libgojni.so`。这比仅依据 split 配置或 AAR 的理论能力判断可靠。
 - 参考的 `openhongguo:0.4.0` AAR 缓存中可见 `libgojni.so` 的 x86_64、arm64-v8a、armeabi-v7a、x86 构建；Lint 还警告 arm64-v8a 的 libgojni.so 未按 16 KB 页面对齐。ABI 是否装入 Universal APK 将由下一轮 CI 明确验证；16 KB 对齐警告保留记录，不伪装已解决。
 - 因 ABI 检查失败，本轮未上传 APK artifact；需要通过新的 workflow 后才能发布 SHA-256 和下载链接。
+
+ 
+## 2026-11-24：修复 ABI 校验脚本 YAML 截断
+
+- 提交 #17 在 Actions 中立即失败且没有 job/check-run；检查发现上一轮生成 workflow 时，ABI 断言行在 `/libgojni.so` 处被截断，造成无效 YAML。这不是应用源码编译失败。
+- 已恢复完整的 grep 断言、for 循环收尾及 success 日志。下一轮 Actions 需验证 workflow 被正确解析，并实际检查 Universal APK 内的三种 ABI。
