@@ -195,7 +195,7 @@ class MainActivity : ComponentActivity() {
                     TvScreen.DEVICE -> DeviceScreen(
                         server = tvApp.handoffServer,
                         enabled = handoffEnabled,
-                        onEnabledChange = ::setHandoffEnabled,
+                        onEnabledChange = ::updateHandoffEnabled,
                         onBack = { screen = TvScreen.BROWSE }
                     )
                     TvScreen.DIAGNOSTICS -> DiagnosticsScreen(
@@ -204,7 +204,7 @@ class MainActivity : ComponentActivity() {
                     )
                     TvScreen.SETTINGS -> SettingsScreen(
                         handoffEnabled = handoffEnabled,
-                        onHandoffEnabledChange = ::setHandoffEnabled,
+                        onHandoffEnabledChange = ::updateHandoffEnabled,
                         onBack = { screen = TvScreen.BROWSE }
                     )
                 }
@@ -258,7 +258,7 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
 
-    private fun setHandoffEnabled(value: Boolean) {
+    private fun updateHandoffEnabled(value: Boolean) {
         handoffEnabled = value
         val server = tvApp.handoffServer ?: return
         server.setEnabled(value)
