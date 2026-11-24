@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -619,18 +620,40 @@ private fun BrowseScreen(
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalArrangement = Arrangement.spacedBy(15.dp)
                     ) {
-                        items(cards, key = { it.id }) { card ->
-                            CatalogCardView(
-                                card = card,
-                                covers = covers,
-                                onClick = {
-                                    if (selectedTab == TvTab.FAVORITES || selectedTab == TvTab.HISTORY) {
-                                        onOpenSeries(card.id)
-                                    } else {
-                                        onOpenSeries(card.id)
-                                    }
-                                },
-                            )
+                        if (selectedTab == TvTab.SEARCH && submittedQuery.isBlank()) {
+                            model.hot?.boards.orEmpty().filter { it.items.isNotEmpty() }.forEachIndexed { boardIndex, board ->
+                                item(key = "hot-board-$boardIndex", span = { GridItemSpan(maxLineSpan) }) {
+                                    Text(
+                                        board.name,
+                                        modifier = Modifier.padding(top = 10.dp, bottom = 2.dp),
+                                        fontSize = 23.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = TvText
+                                    )
+                                }
+                                items(board.items, key = { item -> "hot-$boardIndex-${item.seriesId}-${item.position}" }) { item ->
+                                    CatalogCardView(
+                                        card = Card(
+                                            id = item.seriesId,
+                                            title = item.title,
+                                            cover = item.coverUrl,
+                                            sub = item.searchScore.ifEmpty { item.heat },
+                                            rank = item.position,
+                                            episodes = item.episodeCount
+                                        ),
+                                        covers = covers,
+                                        onClick = { onOpenSeries(item.seriesId) }
+                                    )
+                                }
+                            }
+                        } else {
+                            items(cards, key = { it.id }) { card ->
+                                CatalogCardView(
+                                    card = card,
+                                    covers = covers,
+                                    onClick = { onOpenSeries(card.id) },
+                                )
+                            }
                         }
                     }
                 }
