@@ -15,4 +15,5 @@
 - CI 要求 Universal APK 实际包含 x86_64、arm64-v8a、armeabi-v7a 三种 ABI 的 native libraries，且每种 ABI 均包含 openhongguo 的 libgojni.so。
 
 ### 验证状态
-- 本版本尚未发布；本 changelog 记录源码状态，不代表 CI 构建、ABI 兼容、真机播放或手机到电视接力已经通过。
+- CI #20 已通过单元测试、Lint、Debug 构建、ABI 原生库检查、正式签名 Release 构建及证书/SHA 验证；产物见 [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。
+- GitHub Release 页面尚未创建。CI 成功不等于真机播放、遥控器和手机接力已验证。

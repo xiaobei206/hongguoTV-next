@@ -10,9 +10,11 @@
 - 页面首批数据先呈现，Feed 独立分页；接近末尾续载，补载目标约两屏；播放开始时取消 Feed 请求与待处理封面下载。
 - 独立 applicationId：`com.xiaobei206.hongguotvnext`，用于与旧版本并行安装。
 
-## 当前限制
+## 当前验证状态
 
-核心源码已迁移到新包名，但迁移还不能等同于测试通过。GitHub Actions 构建、openhongguo AAR 原生依赖检查、x86_64 模拟器安装、ARM 电视安装、实际遥控器焦点、真实设备间接力和实际视频播放都以本仓库 CI/设备验证记录为准。还没有声明以上硬件项目全部通过。
+GitHub Actions #20 已通过单元测试、Android Lint、Debug APK 构建、三种 ABI 原生库检查及正式签名 Release APK 构建。正式签名 APK SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。签名证书指纹与仓库根目录新生成的发布证书一致。构建记录：[Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。
+
+当前没有声称已经完成 x86_64 模拟器安装、ARM 电视实机播放、遥控器长时间焦点验证、真实手机接力或特定电视硬件解码测试；这些仍需设备验证。
 
 ## 构建
 

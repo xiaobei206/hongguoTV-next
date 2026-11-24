@@ -22,23 +22,25 @@
 
 ## 构建与测试现状
 - 工程版本设置为 `0.1.0`，使用独立 applicationId，可与旧版并行安装。
-- 最近一次 CI 的 `testDebugUnitTest` 通过，`lintDebug` 因 Media3 opt-in 标注问题失败；已补齐 AndroidX opt-in 标注，等待下一次 CI 验证。
+- [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533) 全部成功：单测、Lint、Debug APK、ABI 检查、正式 Release APK、签名证书验证及 SHA-256。
 - Actions 已将测试与 Lint 分成独立步骤并加入 Gradle 缓存；完整配置可选的四个签名 Secrets 后可走正式签名 Artifact 路径。
 - 开心果的数据模型、Feed、存储、播放/CENC、封面缓存及核心测试已迁移；实际构建结果以 [Actions](https://github.com/xiaobei206/hongguoTV-next/actions) 为准。
 - UI 接通当前核心流程；真实焦点循环、返回后精确恢复焦点/滚动位置、遥控器体验需模拟器/电视测试。
 - 接力协议已经保留关键字段并增加纯协议测试，尚不能据此宣称与实际手机通信通过。
 - 当前 Gradle 实际产出 Universal APK。CI 会检查该 APK 内 x86_64、arm64-v8a、armeabi-v7a 的 native libraries 以及每种 ABI 的 openhongguo libgojni.so；模拟器/真机安装仍是后续验收项。
-- APK、SHA-256 和 Release 链接：首轮 CI 通过后补入此处。不能用源码 commit 替代安装包或测试证据。
+- 正式签名 APK：`hongguoTV-next-v0.1.0-universal-release-signed.apk`；SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。
+- 正式证书 SHA-256：`ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34`。
+- Actions Run #20 已完成：[查看构建记录与 Artifact](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。GitHub Release 页面尚未创建；当前正式 APK 可从对话附件下载。
 
 ## 签名状态
-- 新版独立签名密钥已实际创建并提交于仓库根目录：`hongguoTV-next-release.jks`；对应配置在根目录 `signing-secrets.txt`。CI 已改为优先读取这两份文件。
+- 新版独立签名密钥已实际创建并提交于仓库根目录：`hongguoTV-next-release.jks`；对应配置在根目录 `signing-secrets.txt`。CI 已改为优先读取这两份文件，且已通过正式签名构建。
 - 本地密钥与配置文件应放项目根目录：`hongguoTV-next-release.jks`、`signing-secrets.txt`；两个文件由 `.gitignore` 排除。
 - 正式签名当前直接使用仓库根目录文件，不需配置 GitHub Actions Secrets；备用 Secrets 名称仍保留在 Workflow 中。
 - CI 输出 Debug 测试签名 APK 与正式签名 Release APK。两者证书不同；测试版不能直接覆盖安装正式签名版。
 
 ## 下一阶段
-1. 处理首轮 Actions 的实际构建、Lint 或测试失败。
-2. 检查 openhongguo AAR/所有 native libraries 的 x86_64、arm64-v8a、armeabi-v7a 支持。
-3. 模拟器安装测试，修正焦点、列表复用、返回和页面状态恢复。
-4. 用实际手机测试 `_hongguotv._tcp.` 发现、请求、成功/失败确认；用真实视频验证 CENC、清晰度、解码器与后台任务对播放的影响。
-5. 通过后创建明确标记测试签名的 Release/Artifact，记录 SHA-256；正式签名就绪后再单独走正式发布路径。
+1. 在 x86_64 模拟器安装正式签名 APK，验证首次启动、Feed、返回、焦点及页面状态恢复。
+2. 在 ARM 电视安装测试，实际验证 CENC 视频播放、清晰度切换、解码器与播放期间后台任务影响。
+3. 用实际手机测试 `_hongguotv._tcp.` 服务发现、接力请求与成功/失败确认。
+4. 处理 `libgojni.so` 的 16 KB 页面对齐警告；当前仅记录，尚未解决。
+5. 若设备验证通过，再创建正式 GitHub Release 页面；当前已完成的是 Actions Artifact，不应误称为 Release 页面。

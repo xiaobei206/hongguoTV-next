@@ -79,3 +79,13 @@
 - GitHub Actions 签名步骤优先使用这两个根目录文件；只有两者确实不存在时才退回 Actions Secrets 流程。自用项目的正式签名构建不再依赖额外配置 Secrets。
 - 工作流上传 APK、校验文件与证书信息，不将 JKS/属性文件作为 Artifact；旧的两个参考仓库未修改。
 - 正式签名首个 CI 构建与最终 SHA-256 需要由新一次 Actions 确认。
+
+
+## 2026-11-24：根目录正式签名与 CI 交付验证完成
+
+- 按要求把独立的 `hongguoTV-next-release.jks` 和 `signing-secrets.txt` 实际放到了仓库根目录；Gradle 从 `rootProject.file(...)` 读取。CI 优先使用根目录这两份文件，不再要求配置 Actions Secrets。该提交为 `9317ca40ae8c08dae533f5ccb6c3a4e7379eec46`。
+- Actions #20：单元测试成功；Android Lint 成功（保留 26 条 warning 和 1 条 hint，没有 error）；Debug APK 成功构建；Universal APK 实际包含 `x86_64`、`arm64-v8a`、`armeabi-v7a` 三种 native library，三种 ABI 均发现 `libgojni.so`。
+- 正式签名 Release 构建、`apksigner verify` 和证书/SHA 产物生成均成功；签名证书 SHA-256 指纹：`ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34`。
+- 正式签名 APK：`hongguoTV-next-v0.1.0-universal-release-signed.apk`；SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。SHA 在 runner 和下载到本地后均已校验通过。
+- 构建记录：[Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。正式签名 artifact 名称：`hongguoTV-next-v0.1.0-formal-release`；测试签名 artifact 名称：`hongguoTV-next-v0.1.0-test-apk`。
+- 仍未通过真机验证：电视实机安装/播放、遥控器焦点行为、实际手机到电视的接力通信。Lint 还提示 `openhongguo 0.4.0` 的 ARM64 `libgojni.so` 未满足 16 KB 页面对齐；当前没有声称解决该项。
