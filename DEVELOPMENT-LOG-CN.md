@@ -20,7 +20,7 @@
 
 ### 验证与未解决项
 - Git 仓库审计、文件迁移及提交：已执行。
-- 第一次 Actions 运行在 Android SDK setup 阶段失败，旧的 setup-android action 请求了已不再存在的 SDK 包 `tools`；随后发现 runner 的稳定 SDK channel 没有 `platforms;android-37`；将 compileSdk 降到 36 后，Gradle 依赖元数据检查又显示 14 个 AndroidX 依赖（Compose 1.12.1、Core 1.19.1、Lifecycle 2.11.0）要求 API37。为保留参考项目已使用的稳定库版本，CI 改为从 SDK Beta channel 安装 `platforms;android-37` 与 Build Tools 37，同时 `targetSdk` 保持 36。此前失败发生在 Kotlin 编译前。
+- 第一次 Actions 运行在 Android SDK setup 阶段失败，旧的 setup-android action 请求了已不再存在的 SDK 包 `tools`；随后发现 runner 的稳定 SDK channel 没有 `platforms;android-37`；将 compileSdk 降到 36 后，Gradle 依赖元数据检查又显示 14 个 AndroidX 依赖（Compose 1.12.1、Core 1.19.1、Lifecycle 2.11.0）要求 API37。为保留参考项目已使用的稳定库版本，CI 改为从 Android SDK 的 canary-inclusive channel 安装官方预览包名 `platforms;android-37.0` 与 Build Tools 37，同时 `targetSdk` 保持 36。Android 官方说明 Android 17 预览平台在 SDK Manager 中标为 Cinnamon Bun Preview，Build Tools 37 需选 37.x.x；API37 的平台包名和稳定 API 等级名不完全相同。此前失败发生在 Kotlin 编译前。
 - Gradle 构建、依赖解析、Lint 与测试：最新工作流需重新运行确认，不在源码提交后预先宣称通过。
 - `openhongguo` AAR 的 JNI/ABI：CI 会检查解析到的 AAR 候选和 APK 内原生库目录；仍须检查具体结果。
 - x86_64 模拟器安装、ARM64 电视安装/解码、遥控器长时间焦点行为、实际播放流与接力跨设备通信：尚未通过真机/模拟器验证。
