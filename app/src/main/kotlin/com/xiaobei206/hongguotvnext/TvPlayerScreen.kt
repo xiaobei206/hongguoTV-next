@@ -87,7 +87,6 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
     var diagnosticsVisible by remember { mutableStateOf(false) }
     var diagnosticSnapshot by remember { mutableStateOf(PlaybackDiagnostics.snapshot()) }
     var positionTick by remember { mutableLongStateOf(0L) }
-    var episodeKeyHeld by remember { mutableStateOf(false) }
     val positionTickForUi = positionTick
 
     fun showMenu(timeoutMs: Long, focusControls: Boolean = false) {
