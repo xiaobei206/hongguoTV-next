@@ -701,6 +701,21 @@ private fun CatalogCardView(
                         Text("红果 TV", color = TvMuted, fontSize = 14.sp)
                     }
                 }
+                if (card.rank > 0) {
+                    Surface(
+                        modifier = Modifier.align(Alignment.TopStart).padding(6.dp),
+                        color = TvAccent,
+                        shape = RoundedCornerShape(5.dp)
+                    ) {
+                        Text(
+                            "#${card.rank}",
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                            color = TvBackground,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
             Spacer(Modifier.height(8.dp))
             Text(
