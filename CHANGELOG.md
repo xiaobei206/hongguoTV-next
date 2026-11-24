@@ -23,4 +23,4 @@
 
 ### 验证状态
 - CI #20 已通过单元测试、Lint、Debug 构建、ABI 原生库检查、正式签名 Release 构建及证书/SHA 验证；产物见 [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。
-- GitHub Release 页面尚未创建。CI 成功不等于真机播放、遥控器和手机接力已验证。
+- v0.1.0 已有正式 GitHub Release：[查看发布页](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.0)。CI 成功不等于真机播放、遥控器和手机接力已验证。
