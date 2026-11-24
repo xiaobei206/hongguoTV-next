@@ -86,6 +86,8 @@ import com.xiaobei206.hongguotvnext.model.Feed
 import com.xiaobei206.hongguotvnext.model.Player
 import com.xiaobei206.hongguotvnext.model.PlayerState
 import com.xiaobei206.hongguotvnext.model.Watch
+import com.xiaobei206.hongguotvnext.model.dayLabel
+import com.xiaobei206.hongguotvnext.model.todayKey
 import com.xiaobei206.hongguotvnext.playback.PlaybackDiagnostics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -186,7 +188,7 @@ class MainActivity : ComponentActivity() {
                         )
                     } else StartupProblem(tvApp.startupError)
                     TvScreen.PLAYER -> if (model != null) {
-                        PlayerScreen(
+                        TvPlayerScreen(
                             model = model,
                             exo = tvApp.video.exo,
                             onBack = { goBack(model) }
@@ -391,7 +393,21 @@ private fun BrowseScreen(
                 TvTab.HISTORY -> model.history.list.map(::watchCard)
                 else -> emptyList()
             }
-            val cards = feed?.cards ?: localCards
+            val hotCards = if (selectedTab == TvTab.SEARCH && submittedQuery.isBlank()) {
+                model.hot?.boards.orEmpty().flatMap { board ->
+                    board.items.map { item ->
+                        Card(
+                            id = item.seriesId,
+                            title = item.title,
+                            cover = item.coverUrl,
+                            sub = listOf(board.name, item.searchScore.ifEmpty { item.heat }).filter { it.isNotBlank() }.joinToString(" · "),
+                            rank = item.position,
+                            episodes = item.episodeCount
+                        )
+                    }
+                }
+            } else emptyList()
+            val cards = if (selectedTab == TvTab.SEARCH && submittedQuery.isBlank()) hotCards else feed?.cards ?: localCards
             val gridState = rememberLazyGridState()
             val scope = rememberCoroutineScope()
 
@@ -478,7 +494,12 @@ private fun BrowseScreen(
                     }
                     if (submittedQuery.isBlank()) {
                         Text(
-                            if (model.hotLoading) "正在获取热门搜索…" else "输入关键词后开始搜索。搜索不阻塞其他栏目。",
+                            when {
+                                model.hotLoading -> "正在获取热门搜索…"
+                                model.hotError != null -> "热门搜索加载失败：${model.hotError?.message ?: "未知错误"}"
+                                model.hot != null -> "暂时没有热门搜索内容"
+                                else -> "正在获取热门搜索…"
+                            },
                             color = TvMuted,
                             fontSize = 17.sp
                         )
@@ -509,7 +530,7 @@ private fun BrowseScreen(
                     FilterRow {
                         model.newDates.forEach { date ->
                             FilterChip(
-                                date,
+                                dayLabel(date, todayKey()),
                                 model.dayIsOn(date),
                                 { model.chooseDay(date) }
                             )
@@ -524,7 +545,9 @@ private fun BrowseScreen(
                     ) {
                         Text(
                             when {
-                                selectedTab == TvTab.SEARCH && submittedQuery.isBlank() -> "等待搜索"
+                                selectedTab == TvTab.SEARCH && submittedQuery.isBlank() && model.hotLoading -> "正在获取热门搜索…"
+                                selectedTab == TvTab.SEARCH && submittedQuery.isBlank() && model.hotError != null -> "热门搜索加载失败：${model.hotError?.message ?: "未知错误"}"
+                                selectedTab == TvTab.SEARCH && submittedQuery.isBlank() -> "暂无热门搜索"
                                 feed?.loading == true -> "正在获取第一批内容…"
                                 feed?.error != null -> "加载失败：${feed.error?.message ?: "未知错误"}"
                                 selectedTab == TvTab.FAVORITES -> "还没有收藏剧集"
@@ -536,6 +559,8 @@ private fun BrowseScreen(
                         )
                         if (feed?.error != null) {
                             Button(onClick = { feed.retry() }) { Text("重试") }
+                        } else if (selectedTab == TvTab.SEARCH && submittedQuery.isBlank() && model.hotError != null) {
+                            Button(onClick = { model.loadHot(force = true) }) { Text("重新加载热搜") }
                         }
                     }
                 } else {
