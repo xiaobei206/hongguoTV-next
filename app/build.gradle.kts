@@ -31,7 +31,7 @@ if (hasAnySigningInput && !releaseSigningConfigured) {
 
 android {
     namespace = "com.xiaobei206.hongguotvnext"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.xiaobei206.hongguotvnext"

@@ -16,7 +16,7 @@
 
 ## 构建
 
-需要 JDK 17、Android SDK Platform 36（稳定版），以及可以访问 Google Maven、Maven Central 和 Gradle Plugin Portal 的网络。
+需要 JDK 17、Android SDK Platform 37（Beta 通道，仅供编译；targetSdk 仍为稳定 API 36），以及可以访问 Google Maven、Maven Central 和 Gradle Plugin Portal 的网络。
 
 ```bash
 ./gradlew testDebugUnitTest lintDebug assembleDebug
