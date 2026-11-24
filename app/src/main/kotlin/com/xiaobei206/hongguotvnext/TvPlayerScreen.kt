@@ -26,15 +26,18 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -431,6 +434,18 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
     }
 }
 
+private const val STATS_GRAPH_SAMPLE_INTERVAL_MS = 500L
+private const val STATS_GRAPH_SAMPLE_COUNT = 40
+
+private fun statsNetworkActivityColor(bytes: Long): Color = when {
+    bytes <= 0L -> Color(0xFF262626)
+    bytes < 20L * 1024L -> Color(0xFFF44336)
+    bytes < 40L * 1024L -> Color(0xFFFF7043)
+    bytes < 80L * 1024L -> Color(0xFFFFEE58)
+    bytes < 160L * 1024L -> Color(0xFFD4E157)
+    else -> Color(0xFF9CCC65)
+}
+
 @Composable
 private fun StatsForNerds(
     modifier: Modifier = Modifier,
@@ -446,6 +461,33 @@ private fun StatsForNerds(
     val optimalResolution = player.qualities.maxOrNull()?.let { "${it}P" } ?: "—"
     val fps = if (snapshot.frameRate > 0f) String.format(Locale.ROOT, "%.0f fps", snapshot.frameRate) else "—"
     val bufferSeconds = ((exo.bufferedPosition - exo.currentPosition).coerceAtLeast(0L) / 1000.0)
+
+    // Match the Android reference: 40 fixed 500 ms slots form a rolling
+    // 20-second history. A fixed scale prevents one large CDN burst from
+    // flattening all the ordinary activity into an almost invisible baseline.
+    var graphHistory by remember(player.number) {
+        mutableStateOf(List(STATS_GRAPH_SAMPLE_COUNT) { 0L })
+    }
+    val sweepPosition = remember(player.number) { mutableFloatStateOf(0f) }
+    LaunchedEffect(player.number) {
+        var sampleIndex = 0
+        while (true) {
+            val networkBytes = PlaybackDiagnostics.snapshot().networkSamples.takeLast(2).sum()
+            graphHistory = graphHistory.toMutableList().also { it[sampleIndex] = networkBytes }
+
+            val frameStart = withFrameMillis { it }
+            var elapsed = 0L
+            while (elapsed < STATS_GRAPH_SAMPLE_INTERVAL_MS) {
+                val frame = withFrameMillis { it }
+                elapsed = (frame - frameStart).coerceAtLeast(0L)
+                sweepPosition.floatValue = sampleIndex +
+                    (elapsed.toFloat() / STATS_GRAPH_SAMPLE_INTERVAL_MS).coerceIn(0f, 1f)
+            }
+            sampleIndex = (sampleIndex + 1) % STATS_GRAPH_SAMPLE_COUNT
+            if (sampleIndex == 0) sweepPosition.floatValue = 0f
+        }
+    }
+
     Surface(
         modifier = modifier,
         color = Color(0xE8000000),
@@ -462,20 +504,54 @@ private fun StatsForNerds(
             Text("BITRATE  ${if (snapshot.bitrate > 0) String.format(Locale.ROOT, "%.2f Mbps", bitrateMbps) else "—"}    CONNECTION SPEED  ${if (snapshot.connectionSpeedBps > 0L) String.format(Locale.ROOT, "%.2f Mbps", networkMbps) else "WAITING"}", color = PlayerHudGreen, fontSize = 12.sp)
             Text("NETWORK ACTIVITY · LAST 20 SECONDS", color = Color.White.copy(alpha = 0.82f), fontSize = 10.sp)
             Canvas(Modifier.fillMaxWidth().height(28.dp)) {
-                drawRect(Color(0xFF181818))
-                val samples = snapshot.networkSamples
-                val maxBytes = (samples.maxOrNull() ?: 0L).coerceAtLeast(1L).toFloat()
-                val slot = size.width / samples.size.coerceAtLeast(1)
-                samples.forEachIndexed { index, bytes ->
-                    val h = (bytes.toFloat() / maxBytes * size.height).coerceAtLeast(if (bytes > 0L) 1.dp.toPx() else 0f)
-                    val color = when {
-                        bytes <= 0L -> Color(0xFF262626)
-                        bytes < 20L * 1024L -> Color(0xFFF44336)
-                        bytes < 80L * 1024L -> Color(0xFFFFEE58)
-                        else -> PlayerHudGreen
+                val backgroundRadius = 3.dp.toPx()
+                drawRoundRect(
+                    color = Color(0xFF181818),
+                    cornerRadius = CornerRadius(backgroundRadius, backgroundRadius)
+                )
+                drawLine(
+                    Color(0xFF343434),
+                    Offset(0f, size.height - 0.5.dp.toPx()),
+                    Offset(size.width, size.height - 0.5.dp.toPx()),
+                    strokeWidth = 0.7.dp.toPx()
+                )
+
+                val count = graphHistory.size.coerceAtLeast(1)
+                val slot = size.width / count
+                val maxBytesPerSlot = 2L * 1024L * 1024L
+                val barWidth = (slot * 0.62f).coerceAtLeast(1.dp.toPx()).coerceAtMost(slot)
+                graphHistory.forEachIndexed { index, bytes ->
+                    if (bytes > 0L) {
+                        // Square-root scaling keeps small but real transfers visible.
+                        val normalized = (bytes.toDouble() / maxBytesPerSlot).coerceIn(0.0, 1.0)
+                        val ratio = kotlin.math.sqrt(normalized).toFloat()
+                        val barHeight = (size.height * ratio)
+                            .coerceAtLeast(0.65.dp.toPx())
+                            .coerceAtMost(size.height)
+                        val x = index * slot + (slot - barWidth) / 2f
+                        val radius = (barWidth * 0.18f).coerceAtLeast(0.5.dp.toPx())
+                        drawRoundRect(
+                            color = statsNetworkActivityColor(bytes),
+                            topLeft = Offset(x, size.height - barHeight),
+                            size = Size(barWidth, barHeight),
+                            cornerRadius = CornerRadius(radius, radius)
+                        )
                     }
-                    drawRect(color, Offset(index * slot, size.height - h), Size((slot - 1.dp.toPx()).coerceAtLeast(1.dp.toPx()), h))
                 }
+
+                // A narrow moving cursor marks the live edge of the 20-second sweep.
+                val cursor = (sweepPosition.floatValue % count.toFloat()).coerceIn(0f, count.toFloat())
+                val cursorWidth = 1.3.dp.toPx()
+                val cursorX = (cursor / count) * size.width
+                val safeCursorX = cursorX.coerceIn(0f, (size.width - cursorWidth).coerceAtLeast(0f))
+                drawRect(Color(0xFF080808), Offset(safeCursorX, 0f), Size(cursorWidth, size.height))
+                val edgeX = (safeCursorX + cursorWidth).coerceAtMost(size.width)
+                drawLine(
+                    Color.White.copy(alpha = 0.32f),
+                    Offset(edgeX, 0f),
+                    Offset(edgeX, size.height),
+                    strokeWidth = 0.6.dp.toPx()
+                )
             }
             Text("NETWORK  ${if (snapshot.networkActive) "ACTIVE" else "IDLE"}    BUFFER HEALTH  ${String.format(Locale.ROOT, "%.1f s", bufferSeconds)}", color = PlayerHudGreen, fontSize = 12.sp)
             Text("DROPPED FRAMES  ${snapshot.droppedFrames}", color = PlayerHudGreen, fontSize = 12.sp)
