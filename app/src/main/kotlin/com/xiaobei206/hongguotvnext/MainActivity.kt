@@ -494,7 +494,7 @@ private fun BrowseScreen(
                             Text("清除")
                         }
                     }
-                    if (submittedQuery.isBlank()) {
+                    if (submittedQuery.isBlank() && hotCards.isEmpty()) {
                         Text(
                             when {
                                 model.hotLoading -> "正在获取热门搜索…"
