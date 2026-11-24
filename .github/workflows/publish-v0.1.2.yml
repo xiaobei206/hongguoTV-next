@@ -56,7 +56,7 @@ jobs:
           path: dist
 
       - name: Verify release assets
-        if: steps.current-head.outputs.current == 'true'
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -68,7 +68,7 @@ jobs:
           ls -lh dist/
 
       - name: Publish GitHub Release
-        if: steps.current-head.outputs.current == 'true'
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.1.2
