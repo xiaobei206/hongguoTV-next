@@ -7,8 +7,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
+import android.system.Os
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -63,7 +62,8 @@ class JSONFile<T : Any>(
                 out.write(text.toByteArray())
                 out.fd.sync()
             }
-            Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+            // POSIX rename atomically replaces the destination and is available from API 21.
+            Os.rename(tmp.absolutePath, file.absolutePath)
         } catch (e: Exception) {
             debugLog { "store: ${file.name}: $e" }
         }

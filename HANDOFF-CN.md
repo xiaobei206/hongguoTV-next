@@ -33,7 +33,7 @@
 
 ## 构建与测试现状
 
-- Android 6.0 兼容改动：minSdk=23，启用 Core Library Desugaring 2.1.5；CI 检查最终 APK 的 sdkVersion 必须为 23。CI 成功仍不等于 E55A / 75U6900C 真机播放已通过。
+- Android 6.0 兼容改动：minSdk=23，启用 Core Library Desugaring 2.1.5；API 23-27 封面解码、JSON 原子替换、NSD resolving 集合均有旧系统实现；CI 检查最终 APK 的 sdkVersion 必须为 23。CI 成功仍不等于 E55A / 75U6900C 真机播放已通过。
 - 当前工程版本为 `0.1.4`，使用独立 applicationId，可与旧版并行安装；minSdk 目标为 API 23。
 - [v0.1.2 正式构建](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45389071879) 全部成功：单测、Lint、Debug APK、ABI 检查、正式 Release APK、签名证书验证及 SHA-256。早期基线 [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533) 作为 v0.1.0 历史记录保留。
 - Actions 已将测试与 Lint 分成独立步骤并加入 Gradle 缓存；完整配置可选的四个签名 Secrets 后可走正式签名 Artifact 路径。

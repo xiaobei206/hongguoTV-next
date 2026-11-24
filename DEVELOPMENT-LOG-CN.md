@@ -125,3 +125,12 @@
 - 正式签名 APK：`hongguoTV-next-v0.1.0-universal-release-signed.apk`；SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。SHA 在 runner 和下载到本地后均已校验通过。
 - 构建记录：[Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。正式签名 artifact 名称：`hongguoTV-next-v0.1.0-formal-release`；测试签名 artifact 名称：`hongguoTV-next-v0.1.0-test-apk`。
 - 仍未通过真机验证：电视实机安装/播放、遥控器焦点行为、实际手机到电视的接力通信。Lint 还提示 `openhongguo 0.4.0` 的 ARM64 `libgojni.so` 未满足 16 KB 页面对齐；当前没有声称解决该项。
+
+
+## 2026-11-24：v0.1.4 首轮 API 23 Lint 失败与兼容修复
+
+- 首轮 Actions 的 SDK AAR 构建、单元测试通过；Android Lint 发现 14 个 NewApi 错误，集中在三个位置：CoverStore 无条件使用 API 28 ImageDecoder；Store 使用 API 26 java.nio.file.Files.move；TvDiscovery 使用 API 24 ConcurrentHashMap.KeySetView.clear。
+- CoverStore 改为按系统版本选择解码器：API 28+ 保留 ImageDecoder 与现有缩放逻辑；API 23-27 使用 BitmapFactory bounds + inSampleSize + 600px 限制，并对下载请求优先声明 JPEG/PNG/WebP。旧系统不支持 HEIC 时允许封面解码失败，但不影响核心浏览/播放路径。
+- JSONFile 写入仍先写同目录临时文件并 fsync，再通过 API 21+ android.system.Os.rename 原子替换目标文件，保留崩溃时不留下半截 JSON 的设计，不再触发 API 26 java.nio.file 限制。
+- TvDiscovery 的 resolving 集合改为 Collections.synchronizedSet，规避 API 24 KeySetView.clear 限制；其他发现协议和并发设备映射保持不变。
+- 修复后需重新运行完整 Android CI，特别确认 API 23 Manifest、Lint、Universal ABI、Debug/正式签名 Release 与 SHA-256。

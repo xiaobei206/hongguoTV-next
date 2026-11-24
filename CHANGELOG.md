@@ -1,9 +1,10 @@
 # Changelog
 
-## v0.1.4 — Android 6.0 / API 23 统一兼容（等待 CI 与实机验收）
+## v0.1.4 — Android 6.0 / API 23 统一兼容（修复中，等待 CI 与实机验收）
 
 - 将唯一 Universal APK 的 minSdk 从 API 28 降至 API 23，目标覆盖 Android 6.0 及以上电视；不拆分 Legacy / Standard 两套代码。
 - 启用 Core Library Desugaring（desugar_jdk_libs 2.1.5），使睡眠定时器与手机诊断使用的 java.time.Instant 可在 API 23 上运行。
+- 为 API 23-27 增加 BitmapFactory 封面解码及常见图片格式协商回退；历史/收藏文件使用 API 21+ 的 Os.rename 原子替换；电视发现服务的 resolving 集合改用 API 23 可用的同步集合。
 - Android CI 新增对实际生成 APK Manifest 最低 SDK 的断言，要求 sdkVersion 为 23；如传递依赖要求更高 API 或 Manifest 合并抬高门槛，构建将明确失败。
 - 保持现有 Media3 1.11.1、自维护 openhongguo AAR、ABI 与播放逻辑，不为降低安装门槛而替换播放器。
 - API 23 的安装兼容性不等同于 DRM、编码器或硬件解码能力；小米 E55A、东芝 75U6900C 仍需分别实机安装和播放验收。

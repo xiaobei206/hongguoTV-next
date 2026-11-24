@@ -144,7 +144,8 @@ class TvDiscovery(context: Context) {
 
     private val manager = context.applicationContext.getSystemService(Context.NSD_SERVICE) as NsdManager
     private val devices = ConcurrentHashMap<String, TvDevice>()
-    private val resolving = ConcurrentHashMap.newKeySet<String>()
+    // API 23-safe; ConcurrentHashMap.KeySetView.clear is not available before API 24.
+    private val resolving = java.util.Collections.synchronizedSet(mutableSetOf<String>())
     @Volatile private var discoveryListener: NsdManager.DiscoveryListener? = null
     @Volatile private var onChanged: ((List<TvDevice>) -> Unit)? = null
     @Volatile private var onError: ((String) -> Unit)? = null

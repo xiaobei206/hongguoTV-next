@@ -3,7 +3,9 @@ package com.xiaobei206.hongguotvnext.covers
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
+import android.os.Build
 import android.net.Uri
+import androidx.annotation.RequiresApi
 import android.util.LruCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -14,15 +16,15 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.ByteBuffer
 import java.security.MessageDigest
 import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
  * CoverStore downloads posters once, keeps them on disk as JPEG, scaled
- * down, and in memory as bitmaps while there is room. The CDN serves HEIC,
- * which Android reads from 9 on.
+ * down, and in memory as bitmaps while there is room. Android 9+ can decode
+ * the CDN's HEIC responses; older systems request common formats and use
+ * BitmapFactory as a compatibility fallback.
  */
 class CoverStore(private val dir: File) {
     companion object {
@@ -84,19 +86,58 @@ class CoverStore(private val dir: File) {
             BitmapFactory.decodeFile(path.path)?.let { return it }
         }
         val bytes = download(raw) ?: return null
-        val img = try {
-            ImageDecoder.decodeBitmap(ImageDecoder.createSource(ByteBuffer.wrap(bytes))) { decoder, info, _ ->
-                val w = info.size.width
-                val h = info.size.height
-                val scale = MAX_PIXELS.toDouble() / max(w, h)
-                if (scale < 1) decoder.setTargetSize((w * scale).roundToInt().coerceAtLeast(1), (h * scale).roundToInt().coerceAtLeast(1))
-                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-            }
-        } catch (e: Exception) {
-            return null
-        }
+        val img = decode(bytes) ?: return null
         save(img, path)
         return img
+    }
+
+    private fun decode(bytes: ByteArray): Bitmap? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) decodeModern(bytes) else decodeLegacy(bytes)
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun decodeModern(bytes: ByteArray): Bitmap? = try {
+        ImageDecoder.decodeBitmap(ImageDecoder.createSource(java.nio.ByteBuffer.wrap(bytes))) { decoder, info, _ ->
+            val w = info.size.width
+            val h = info.size.height
+            val scale = MAX_PIXELS.toDouble() / max(w, h)
+            if (scale < 1) {
+                decoder.setTargetSize(
+                    (w * scale).roundToInt().coerceAtLeast(1),
+                    (h * scale).roundToInt().coerceAtLeast(1),
+                )
+            }
+            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    /** API 23-27 has no platform HEIC decoder; decode negotiated JPEG/PNG/WebP with bounded memory. */
+    private fun decodeLegacy(bytes: ByteArray): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        val width = bounds.outWidth
+        val height = bounds.outHeight
+        if (width <= 0 || height <= 0) return null
+
+        var sample = 1
+        while (max(width / sample, height / sample) > MAX_PIXELS * 2) sample *= 2
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = sample
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+        val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options) ?: return null
+        val scale = minOf(1.0, MAX_PIXELS.toDouble() / max(decoded.width, decoded.height))
+        if (scale >= 1.0) return decoded
+
+        val scaled = Bitmap.createScaledBitmap(
+            decoded,
+            (decoded.width * scale).roundToInt().coerceAtLeast(1),
+            (decoded.height * scale).roundToInt().coerceAtLeast(1),
+            true,
+        )
+        if (scaled !== decoded) decoded.recycle()
+        return scaled
     }
 
     private fun download(raw: String): ByteArray? {
@@ -104,6 +145,7 @@ class CoverStore(private val dir: File) {
         return try {
             conn.connectTimeout = 30_000
             conn.readTimeout = 30_000
+            conn.setRequestProperty("Accept", "image/jpeg,image/png,image/webp,*/*;q=0.8")
             if (conn.responseCode != 200) null else conn.inputStream.use { it.readBytes() }
         } catch (e: Exception) {
             null
