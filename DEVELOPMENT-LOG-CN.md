@@ -49,3 +49,11 @@
 - 第 14 次 Actions：`testDebugUnitTest` 已通过；`lintDebug` 因 96 个错误失败，第一项定位到迁移的 Media3 `ExoVideo.kt`。现有 Kotlin `@file:OptIn` 能满足编译器，但未被 Android Lint 当作 AndroidX 的 opt-in 证明，因此给实际使用 Media3 的类/函数补充 `androidx.annotation.OptIn(markerClass = [UnstableApi::class])`；后续 CI 将确认是否覆盖所有问题。
 - 调整 Gradle 签名防护：只有显式请求 Release APK 打包、且根目录正式签名配置不完整时才失败；本地部分密钥配置不会再阻止 Debug 构建、测试与 Lint。签名属性文件解析错误会给出明确中文错误，不输出秘密值。
 - 本次代码修正已提交；Lint、APK 打包、ABI 及 SHA 仍以新的 Actions 结果为准。
+
+
+## 2026-11-24：Universal APK 的 ABI 验证方式修正
+
+- 最新 Actions #16 的 `testDebugUnitTest` 通过，Android Lint 通过（0 errors，26 warnings，1 hint），`assembleDebug` 通过并生成 `app/build/outputs/apk/debug/app-universal-debug.apk`。
+- ABI 检查脚本此前错误地要求三个独立 ABI 子目录 APK，导致脚本失败，未能进入 checksum/artifact 上传。Gradle 此次实际只产出 Universal APK，因此检查改为读取 APK ZIP 内的真实路径，要求三个 ABI 的 .so 文件均存在，并分别要求 openhongguo 的 `libgojni.so`。这比仅依据 split 配置或 AAR 的理论能力判断可靠。
+- 参考的 `openhongguo:0.4.0` AAR 缓存中可见 `libgojni.so` 的 x86_64、arm64-v8a、armeabi-v7a、x86 构建；Lint 还警告 arm64-v8a 的 libgojni.so 未按 16 KB 页面对齐。ABI 是否装入 Universal APK 将由下一轮 CI 明确验证；16 KB 对齐警告保留记录，不伪装已解决。
+- 因 ABI 检查失败，本轮未上传 APK artifact；需要通过新的 workflow 后才能发布 SHA-256 和下载链接。

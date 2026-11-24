@@ -27,7 +27,7 @@
 - 开心果的数据模型、Feed、存储、播放/CENC、封面缓存及核心测试已迁移；实际构建结果以 [Actions](https://github.com/xiaobei206/hongguoTV-next/actions) 为准。
 - UI 接通当前核心流程；真实焦点循环、返回后精确恢复焦点/滚动位置、遥控器体验需模拟器/电视测试。
 - 接力协议已经保留关键字段并增加纯协议测试，尚不能据此宣称与实际手机通信通过。
-- Universal/ABI 产物已在 Gradle 配置，真实兼容性以 CI APK 检查和安装测试为准。
+- 当前 Gradle 实际产出 Universal APK。CI 会检查该 APK 内 x86_64、arm64-v8a、armeabi-v7a 的 native libraries 以及每种 ABI 的 openhongguo libgojni.so；模拟器/真机安装仍是后续验收项。
 - APK、SHA-256 和 Release 链接：首轮 CI 通过后补入此处。不能用源码 commit 替代安装包或测试证据。
 
 ## 签名状态

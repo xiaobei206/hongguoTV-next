@@ -30,7 +30,7 @@ CI 将单元测试、Android Lint、Debug 构建分成独立步骤，并使用 G
 
 ## ABI
 
-Gradle 已配置生成包含 `x86_64`、`arm64-v8a`、`armeabi-v7a` 的 ABI APK 与 Universal APK。CI 会列出打包进 APK 的原生库目录；若 `openhongguo` AAR 引入只支持部分 ABI 的 `.so`，应以实际构建、APK 内容和安装结果为准。
+Gradle 配置了 ABI 拆分与 Universal APK。当前 CI 实际输出为一个 Universal Debug APK，而不是三个独立 ABI 子目录 APK；因此 CI 会直接检查 Universal APK 内容，要求 `x86_64`、`arm64-v8a`、`armeabi-v7a` 均含本地库，并逐一确认 `openhongguo` 的 `libgojni.so` 存在。最终兼容性仍以 APK 内容和模拟器/真机安装结果为准。
 
 ## 根目录签名
 
