@@ -16,7 +16,7 @@
 
 v0.1.2 的 GitHub Actions 正在验证。只有单元测试、Android Lint、ABI 检查、正式签名 APK 与证书/SHA-256 校验成功后，才会发布正式 Release。
 
-最终发布标记提交：`release: prepare v0.1.2 final`。正式 Release 仅由该提交对应的成功 Android CI 自动发布。
+最终发布标记提交：`release: prepare v0.1.2 final`。正式 Release 仅由该提交对应的成功 Android CI 自动发布；发布工作流还会校验标记提交和 main 最新提交一致。
 
 v0.1.0 的正式签名 APK SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。签名证书指纹：`ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34`。
 
