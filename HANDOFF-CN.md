@@ -3,7 +3,7 @@
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
 - **版本：** `0.1.2`（搜索热榜、日期标签、电视播放遥控与播放诊断）
-- **发布候选标记：** `release: prepare v0.1.2`；仅当该候选仍是 `main` 最新提交且 Android CI、正式签名与 SHA-256 校验全部成功时发布。
+- **发布候选标记：** `release: prepare v0.1.2 final`；仅当该候选仍是 `main` 最新提交且 Android CI、正式签名与 SHA-256 校验全部成功时发布。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
