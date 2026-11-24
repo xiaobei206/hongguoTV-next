@@ -1,6 +1,6 @@
 # 红果 TV Next
 
-> 当前开发版本：**v0.1.6**。详情页新增“同系列”季数栏，可从任意一季直接切换到同系列其他季；v0.1.5 的封面修复继续包含在内。发布包以 [GitHub Releases](https://github.com/xiaobei206/hongguoTV-next/releases) 为准，CI/实机验收状态以对应记录为准。
+> 当前开发版本：**v0.1.8**。播放器诊断面板按开心果实现补齐 Connection Speed、Network Activity、Buffer Health 三条图，并统一绘图与文字样式；v0.1.7 的 SDK VLC 管道竞态修复继续包含在内。发布包以 [GitHub Releases](https://github.com/xiaobei206/hongguoTV-next/releases) 为准，CI/实机验收状态以对应记录为准。
 
 独立的新一代 Android TV 客户端。所有新版开发仅写入本仓库；旧版 [hongguoTV](https://github.com/xiaobei206/hongguoTV) 保持只读，手机/平板项目 [kaixinguo-android](https://github.com/xiaobei206/kaixinguo-android) 是核心架构参考。
 
@@ -23,7 +23,7 @@
 
 ## 当前验证状态
 
-当前开发版本为 v0.1.5。统一安装包的最低系统要求已设为 Android 6.0（API 23），并加入 Core Library Desugaring、旧版封面解码与文件/NSD 兼容实现。正式发布由带 release 标记的提交对应的 Android CI 全部通过后自动完成；老电视实机安装/播放仍需单独验收。本版修复此前只升级官方 Maven SDK、却未接入开心果空响应恢复实现的问题：Android CI 固定检出自维护的 `openhongguo` 提交 `1e9334185a46033bcc4e3e30fc41f649958b1389`，运行 SDK Go 测试、应用诊断补丁、编译本地 AAR，再将该 AAR 注入 NEXT。V5 POST 返回 HTTP 200 空响应后，SDK 会尝试同一身份的签名、无请求体 `video_tab` GET，并严格校验当前分集；APK 打包没有指定该 AAR 会直接失败。
+当前开发版本为 v0.1.8。统一安装包的最低系统要求已设为 Android 6.0（API 23），并加入 Core Library Desugaring、旧版封面解码与文件/NSD 兼容实现。正式发布由带 release 标记的提交对应的 Android CI 全部通过后自动完成；老电视实机安装/播放仍需单独验收。本版修复此前只升级官方 Maven SDK、却未接入开心果空响应恢复实现的问题：Android CI 固定检出自维护的 `openhongguo` 提交 `1e9334185a46033bcc4e3e30fc41f649958b1389`，运行 SDK Go 测试、应用诊断补丁、编译本地 AAR，再将该 AAR 注入 NEXT。V5 POST 返回 HTTP 200 空响应后，SDK 会尝试同一身份的签名、无请求体 `video_tab` GET，并严格校验当前分集；APK 打包没有指定该 AAR 会直接失败。
 
 v0.1.3 的播放空响应修复已通过 Android CI 并正式发布；SDK 空响应回退的目标电视实播仍需在设备上验证。不能把 CI 构建成功等同于特定电视的硬件解码或播放成功。
 

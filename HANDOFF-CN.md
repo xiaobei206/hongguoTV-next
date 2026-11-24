@@ -2,7 +2,7 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.6`（新增系列剧跨季选择；封面修复一并保留，CI 与目标电视待验收）
+- **版本：** `0.1.8`（完整移植开心果诊断面板三条图；v0.1.7 的 SDK VLC 管道竞态修复保留，CI 与目标电视待验收）
 - **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
@@ -34,7 +34,7 @@
 ## 构建与测试现状
 
 - Android 6.0 兼容改动：minSdk=23，启用 Core Library Desugaring 2.1.5；API 23-27 封面解码、JSON 原子替换、NSD resolving 集合均有旧系统实现；CI 检查最终 APK 的 sdkVersion 必须为 23。CI 成功仍不等于 E55A / 75U6900C 真机播放已通过。
-- 当前工程版本为 `0.1.6`，使用独立 applicationId，可与旧版并行安装；minSdk 目标为 API 23。
+- 当前工程版本为 `0.1.8`，使用独立 applicationId，可与旧版并行安装；minSdk 目标为 API 23。
 - [v0.1.2 正式构建](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45389071879) 全部成功：单测、Lint、Debug APK、ABI 检查、正式 Release APK、签名证书验证及 SHA-256。早期基线 [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533) 作为 v0.1.0 历史记录保留。
 - Actions 已将测试与 Lint 分成独立步骤并加入 Gradle 缓存；完整配置可选的四个签名 Secrets 后可走正式签名 Artifact 路径。
 - 开心果的数据模型、Feed、存储、播放/CENC、封面缓存及核心测试已迁移；实际构建结果以 [Actions](https://github.com/xiaobei206/hongguoTV-next/actions) 为准。
@@ -60,6 +60,10 @@
 5. 处理 `libgojni.so` 的 16 KB 页面对齐警告；当前仅记录，尚未解决。
 6. 在目标电视上验收 v0.1.2 播放/遥控器，并用真实手机回归设备接力。
 
+
+## v0.1.8 开心果三图诊断面板
+- 诊断面板按开心果原实现显示 Connection Speed、Network Activity、Buffer Health 三条图，统一字号、颜色、底板和扫描游标。
+- 连接速度为蓝色平滑曲线，网络活动为分档柱形，缓冲健康度为填充曲线；采样窗口固定为 20 秒 / 40 个 500ms 槽位。
 
 ## v0.1.6 同系列多季选择
 - 在详情页选集上方增加同系列季数栏；任意一季的详情都共享排序后的季列表。
