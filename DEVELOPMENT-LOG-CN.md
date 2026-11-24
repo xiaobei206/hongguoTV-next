@@ -20,7 +20,8 @@
 
 ### 验证与未解决项
 - Git 仓库审计、文件迁移及提交：已执行。
-- Gradle 构建、依赖解析、Lint 与测试：必须等待 Actions 的实际结果，不在源码提交后预先宣称通过。
+- 第一次 Actions 运行在 Android SDK setup 阶段失败，日志为旧的 setup-android action 请求已不再存在的 SDK 包 `tools`；该失败发生在 Gradle 启动前，不是 Kotlin 构建失败。CI 已改为直接使用 GitHub runner 预装 SDK 并显式添加 `cmdline-tools/latest/bin` 到 PATH，避免依赖旧 action 的包安装假设。
+- Gradle 构建、依赖解析、Lint 与测试：最新工作流需重新运行确认，不在源码提交后预先宣称通过。
 - `openhongguo` AAR 的 JNI/ABI：CI 会检查解析到的 AAR 候选和 APK 内原生库目录；仍须检查具体结果。
 - x86_64 模拟器安装、ARM64 电视安装/解码、遥控器长时间焦点行为、实际播放流与接力跨设备通信：尚未通过真机/模拟器验证。
 - 正式发布密钥暂未配置。Debug 测试构建与正式签名更新路径是两回事。
