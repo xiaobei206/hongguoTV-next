@@ -1,15 +1,15 @@
 @file:OptIn(androidx.media3.common.util.UnstableApi::class)
 
-package com.xiaobei206.hongguotvnextnext.playback
+package com.xiaobei206.hongguotvnext.playback
 
 import android.net.Uri
 import androidx.media3.common.C
 import androidx.media3.datasource.BaseDataSource
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
-import com.xiaobei206.hongguotvnextnext.cenc.Layout
-import com.xiaobei206.hongguotvnextnext.model.Streams
-import com.xiaobei206.hongguotvnextnext.model.debugLog
+import com.xiaobei206.hongguotvnext.cenc.Layout
+import com.xiaobei206.hongguotvnext.model.Streams
+import com.xiaobei206.hongguotvnext.model.debugLog
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InterruptedIOException

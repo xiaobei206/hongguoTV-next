@@ -1,4 +1,4 @@
-package com.xiaobei206.hongguotvnextnext.cast
+package com.xiaobei206.hongguotvnext.cast
 
 import android.content.Context
 import android.net.nsd.NsdManager
