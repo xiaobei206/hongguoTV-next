@@ -41,7 +41,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.nativeKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
@@ -87,6 +86,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
     var diagnosticsVisible by remember { mutableStateOf(false) }
     var diagnosticSnapshot by remember { mutableStateOf(PlaybackDiagnostics.snapshot()) }
     var positionTick by remember { mutableLongStateOf(0L) }
+    var episodeKeyHeld by remember { mutableStateOf(false) }
     val positionTickForUi = positionTick
 
     fun showMenu(timeoutMs: Long, focusControls: Boolean = false) {
@@ -171,6 +171,12 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
             .onFocusChanged { if (it.isFocused && menuVisible) controlsFocused = false }
             .focusable()
             .onPreviewKeyEvent { event ->
+                if (event.type == KeyEventType.KeyUp &&
+                    (event.key == Key.DirectionUp || event.key == Key.DirectionDown)
+                ) {
+                    episodeKeyHeld = false
+                    return@onPreviewKeyEvent false
+                }
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (event.key) {
                     Key.Back, Key.Escape -> {
@@ -202,33 +208,39 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                         }
                     }
                     Key.DirectionUp -> {
-                        if (event.nativeKeyEvent.repeatCount > 0) true
+                        if (episodeKeyHeld) true
                         else if (menuVisible && !controlsFocused) {
+                            episodeKeyHeld = true
                             showMenu(5_000L, focusControls = true)
                             true
                         } else if (menuVisible && controlsFocused) {
                             // Let Compose move focus within the visible control row.
                             false
                         } else if (player.hasPrevious) {
+                            episodeKeyHeld = true
                             player.step(-1)
                             true
                         } else {
+                            episodeKeyHeld = true
                             showSeekHint("已经是第一集")
                             true
                         }
                     }
                     Key.DirectionDown -> {
-                        if (event.nativeKeyEvent.repeatCount > 0) true
+                        if (episodeKeyHeld) true
                         else if (menuVisible && !controlsFocused) {
+                            episodeKeyHeld = true
                             showMenu(5_000L, focusControls = true)
                             true
                         } else if (menuVisible && controlsFocused) {
                             // Let Compose move focus within the visible control row.
                             false
                         } else if (player.hasNext) {
+                            episodeKeyHeld = true
                             player.step(1)
                             true
                         } else {
+                            episodeKeyHeld = true
                             showSeekHint("已经是最后一集")
                             true
                         }
@@ -253,7 +265,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
             factory = { viewContext ->
                 PlayerView(viewContext).apply {
                     useController = false
-                    player = exo
+                    this.player = exo
                     setKeepContentOnPlayerReset(true)
                     setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
                     setShutterBackgroundColor(android.graphics.Color.BLACK)
@@ -271,7 +283,8 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
             StatsForNerds(
                 modifier = Modifier.align(Alignment.TopStart).padding(24.dp).width(390.dp),
                 snapshot = diagnosticSnapshot,
-                player = player
+                player = player,
+                exo = exo
             )
         }
 
@@ -426,7 +439,8 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
 private fun StatsForNerds(
     modifier: Modifier = Modifier,
     snapshot: PlaybackDiagnostics.Snapshot,
-    player: Player
+    player: Player,
+    exo: ExoPlayer
 ) {
     val networkMbps = snapshot.connectionSpeedBps / 1_000_000.0
     val bitrateMbps = snapshot.bitrate / 1_000_000.0
