@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.1.4 — Android 6.0 / API 23 统一兼容（修复中，等待 CI 与实机验收）
+## v0.1.4 — Android 6.0 / API 23 统一兼容（最终发布候选；CI 与实机验收分开）
 
 - 将唯一 Universal APK 的 minSdk 从 API 28 降至 API 23，目标覆盖 Android 6.0 及以上电视；不拆分 Legacy / Standard 两套代码。
 - 启用 Core Library Desugaring（desugar_jdk_libs 2.1.5），使睡眠定时器与手机诊断使用的 java.time.Instant 可在 API 23 上运行。

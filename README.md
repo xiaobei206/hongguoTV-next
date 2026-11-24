@@ -21,13 +21,13 @@
 
 ## 当前验证状态
 
-当前开发版本为 v0.1.4，正在把统一安装包的最低系统要求从 Android 9.0（API 28）降至 Android 6.0（API 23）。本版加入 Core Library Desugaring，并在 CI 中检查实际 APK 的最低系统版本；CI 与老电视实机安装/播放结果以本次构建为准。本版修复此前只升级官方 Maven SDK、却未接入开心果空响应恢复实现的问题：Android CI 固定检出自维护的 `openhongguo` 提交 `1e9334185a46033bcc4e3e30fc41f649958b1389`，运行 SDK Go 测试、应用诊断补丁、编译本地 AAR，再将该 AAR 注入 NEXT。V5 POST 返回 HTTP 200 空响应后，SDK 会尝试同一身份的签名、无请求体 `video_tab` GET，并严格校验当前分集；APK 打包没有指定该 AAR 会直接失败。
+当前开发版本为 v0.1.4。统一安装包的最低系统要求已设为 Android 6.0（API 23），并加入 Core Library Desugaring、旧版封面解码与文件/NSD 兼容实现。正式发布由带 release 标记的提交对应的 Android CI 全部通过后自动完成；老电视实机安装/播放仍需单独验收。本版修复此前只升级官方 Maven SDK、却未接入开心果空响应恢复实现的问题：Android CI 固定检出自维护的 `openhongguo` 提交 `1e9334185a46033bcc4e3e30fc41f649958b1389`，运行 SDK Go 测试、应用诊断补丁、编译本地 AAR，再将该 AAR 注入 NEXT。V5 POST 返回 HTTP 200 空响应后，SDK 会尝试同一身份的签名、无请求体 `video_tab` GET，并严格校验当前分集；APK 打包没有指定该 AAR 会直接失败。
 
 v0.1.3 的播放空响应修复已通过 Android CI 并正式发布；SDK 空响应回退的目标电视实播仍需在设备上验证。不能把 CI 构建成功等同于特定电视的硬件解码或播放成功。
 
 v0.1.3 已正式发布：[GitHub Release 下载页](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.3)。该版本的单元测试、Android Lint、Debug 构建、Universal APK 三种 ABI 检查、正式签名 APK 构建和签名证书/SHA-256 校验均已通过。电视遥控器和实际播放仍需在目标电视上验收。
 
-最终发布标记提交：`release: prepare v0.1.2 final`。正式 Release 仅由该提交对应的成功 Android CI 自动发布；发布工作流还会校验标记提交和 main 最新提交一致。
+v0.1.4 最终发布标记提交：`release: prepare v0.1.4 final`。正式 Release 仅由该提交对应的成功 Android CI 自动发布；发布工作流还会校验标记提交和 main 最新提交一致。
 
 v0.1.0 的正式签名 APK SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。签名证书指纹：`ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34`。
 

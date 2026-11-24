@@ -142,3 +142,10 @@
 - JSONFile 改为对同目录临时文件调用 File.renameTo，并检查布尔返回值；Android/Linux 同文件系统 rename 会原子替换现有目标，File API 从早期 Android 即可使用，且 JVM 单测可实际验证读写。
 - 保留临时文件写入、fd.sync 和失败时清理逻辑；不通过关闭测试或跳过持久化断言规避问题。
 - 下一轮 CI 先验证 48 项单测，再执行 API 23 Lint、APK Manifest、ABI、签名与 SHA-256。
+
+
+## 2026-11-24：v0.1.4 发布工作流准备
+
+- v0.1.4 的兼容代码已通过一轮完整 Android CI：SDK AAR、48 项应用单元测试、Android Lint、API 23 APK Manifest 门禁、x86_64/arm64-v8a/armeabi-v7a ABI 检查、测试 APK、正式签名 APK、证书与 SHA-256 校验均成功。
+- 新增独立 `.github/workflows/publish-v0.1.4.yml`，只会在带 `release: prepare v0.1.4 final` 标记且该提交仍是 main 最新提交时，下载本次成功 CI 的正式签名 Artifact，重新验证 SHA 与证书后发布 v0.1.4。
+- 最终标记提交会再次触发完整 Android CI；只有该次 CI 全部成功，Release 才会自动发布。真实电视安装与播放仍须用户在设备上验收。
