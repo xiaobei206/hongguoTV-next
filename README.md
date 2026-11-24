@@ -6,15 +6,17 @@
 
 - Kotlin + Jetpack Compose 的电视端主流程：推荐、排行榜、新剧上线、搜索、收藏、历史、详情、选集、播放器、设备接力、诊断和设置入口。
 - 迁移开心果的 AppModel、Catalog、Card、Feed、收藏/历史持久化、会话状态、播放状态机、CoverStore、Media3 ExoPlayer、流注册与 CENC 解密、播放诊断。
-- 迁移旧 TV 的 TCP/NSD 投屏接力服务及发往开心果手机端的诊断客户端；接力协议保持版本 1，独立协议编解码器有单元测试。
+- 迁移旧 TV 的 TCP/NSD 投屏接力服务及发往开心果手机端的诊断客户端；接力协议保持版本 1，独立协议编解码器有单元测试。设备接力开关持久保存，默认开启，关闭后不广播 NSD 并拒收接力任务。
 - 页面首批数据先呈现，Feed 独立分页；接近末尾续载，补载目标约两屏；播放开始时取消 Feed 请求与待处理封面下载。
 - 独立 applicationId：`com.xiaobei206.hongguotvnext`，用于与旧版本并行安装。
 
 ## 当前验证状态
 
-GitHub Actions #20 已通过单元测试、Android Lint、Debug APK 构建、三种 ABI 原生库检查及正式签名 Release APK 构建。正式签名 APK SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。签名证书指纹与仓库根目录新生成的发布证书一致。构建记录：[Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。
+当前开发版本为 v0.1.1：升级 `openhongguo` 至 0.4.1，以修复 v0.1.0 使用 0.4.0 时播放模型 HTTP 200 空响应的问题；新增持久化设备接力开关（默认开启）和播放失败重试入口。v0.1.1 正在由 GitHub Actions 验证，只有成功后才会生成新的正式 Release。
 
-当前没有声称已经完成 x86_64 模拟器安装、ARM 电视实机播放、遥控器长时间焦点验证、真实手机接力或特定电视硬件解码测试；这些仍需设备验证。
+v0.1.0 的 GitHub Actions #20 已通过单元测试、Android Lint、Debug APK 构建、三种 ABI 原生库检查及正式签名 Release APK 构建。正式签名 APK SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。签名证书指纹与仓库根目录新生成的发布证书一致。构建记录：[Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。
+
+尚未声称已完成 x86_64 模拟器安装、ARM 电视实机播放、遥控器长时间焦点验证、真实手机接力或特定电视硬件解码测试；这些仍需设备验证。
 
 ## 构建
 
