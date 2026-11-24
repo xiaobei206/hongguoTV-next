@@ -12,9 +12,11 @@
 
 ## 当前验证状态
 
-当前开发版本为 v0.1.1：升级 `openhongguo` 至 0.4.1，以修复 v0.1.0 使用 0.4.0 时播放模型 HTTP 200 空响应的问题；新增持久化设备接力开关（默认开启）和播放失败重试入口。v0.1.1 正在由 GitHub Actions 验证，只有成功后才会生成新的正式 Release。
+当前开发版本为 v0.1.2：在 v0.1.1 播放兼容性与接力设置基础上，完善电视搜索页热搜榜展示和新剧日期标签；播放页采用遥控器优先的菜单显隐逻辑，并提供“播放诊断”入口与英文 Stats for Nerds 悬浮面板。菜单隐藏时控制层不参与组合，避免按钮残影；方向键、OK、返回和切集的时序仍需目标电视实测。
 
-v0.1.0 的 GitHub Actions #20 已通过单元测试、Android Lint、Debug APK 构建、三种 ABI 原生库检查及正式签名 Release APK 构建。正式签名 APK SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。签名证书指纹与仓库根目录新生成的发布证书一致。构建记录：[Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533)。
+v0.1.2 的 GitHub Actions 正在验证。只有单元测试、Android Lint、ABI 检查、正式签名 APK 与证书/SHA-256 校验成功后，才会发布正式 Release。
+
+v0.1.0 的正式签名 APK SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。签名证书指纹：`ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34`。
 
 尚未声称已完成 x86_64 模拟器安装、ARM 电视实机播放、遥控器长时间焦点验证、真实手机接力或特定电视硬件解码测试；这些仍需设备验证。
 
