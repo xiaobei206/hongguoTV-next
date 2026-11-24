@@ -1,5 +1,15 @@
 # 开发日志（持续累积）
 
+## 2026-11-24：v0.1.3 修复播放空响应与统一 SDK 构建
+
+- 对照 NEXT 初版和开心果历史提交后确认：两边 `Catalog.resolvePlayback` 入口基本相同，差异是 NEXT 只依赖官方 Maven SDK；开心果早在 2026-11-21 就加入 V5 空响应后的签名 `video_tab` GET 恢复，并通过工作流注入本地 AAR。
+- Android CI 固定检出 `xiaobei206/openhongguo@1e9334185a46033bcc4e3e30fc41f649958b1389`，执行诊断补丁，运行 `go test ./...` 和 mobile core 测试，再使用 `bindings/mobile/build.sh android` 构建 AAR。
+- NEXT 的测试、Lint、Debug APK 和正式签名 APK都显式使用这份 AAR；缺少 AAR 参数时 APK 打包会失败，避免静默退回官方 Maven SDK。
+- 该 SDK 版本包含 V5 空响应后的签名、无请求体 `video_tab` 回退、同一身份和当前分集校验，以及设备激活、EGDI 与最新签名实现。
+- 诊断补丁仅输出 HTTP 状态、去 query 接口路径、响应长度、Content-Type/Encoding 与脱敏 profile fingerprint；不会记录原始标识、Cookie、Token、签名或完整响应体。
+- 版本提高到 v0.1.3 / versionCode 4；同步 CI Artifact 与发布工作流文件名。
+- 源码提交不等于验证通过；需核对本次 Actions 及在目标电视上重试此前返回空 200 的同一分集。
+
 ## 2026-11-24：v0.1.2 电视遥控器播放器、热搜和日期标签
 
 - 新增 `TvPlayerScreen.kt`，以电视遥控器为中心管理 HUD 可见状态与焦点状态；菜单隐藏时左右快退/快进、上下切集；OK 第一次显示菜单，下一次暂停并把焦点交给播放按钮；控制栏获得焦点后允许方向键导航。

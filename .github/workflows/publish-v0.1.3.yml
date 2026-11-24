@@ -1,0 +1,103 @@
+name: Publish v0.1.3 formal release
+
+on:
+  workflow_run:
+    workflows: ["Android CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact Android CI source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check whether this commit is the final release marker
+        id: release-marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log -1 --format=%B | grep -Fq 'release: prepare v0.1.3 final'; then
+            echo "matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches=false" >> "$GITHUB_OUTPUT"
+            echo "This successful CI run is not the final v0.1.3 release candidate."
+          fi
+
+      - name: Ensure this is still the latest main commit
+        id: current-head
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          if [[ "$current" == "$TARGET_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale release candidate $TARGET_SHA; main is now $current."
+          fi
+
+      - name: Download signed APK from the successful CI run
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.3-formal-release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.3-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.3-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.3-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.3-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.3-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.3
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: 红果 TV Next v0.1.3
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 红果 TV Next v0.1.3
+
+            ### 播放空响应修复
+            - CI 固定检出 `xiaobei206/openhongguo` 的 `1e9334185a46033bcc4e3e30fc41f649958b1389`，APK 打包直接注入自维护 AAR，而不再只升级官方 Maven SDK。
+            - V5 播放 POST 返回 HTTP 200 空响应时，SDK 改走同一设备身份的签名、无请求体 `video_tab` GET；严格解析当前分集，并保留旧接口兼容回退。
+            - 构建前运行 Go SDK 与 mobile core 测试，并应用诊断补丁；没有自维护 AAR 时 APK 打包会失败，不会静默回退。
+            - 继承固定 SDK 的完整播放签名、设备激活及 EGDI 处理；诊断不记录原始设备 ID、Cookie、Token、签名或完整响应体。
+
+            ### 下载与校验
+            Universal APK 内含 x86_64、arm64-v8a、armeabi-v7a 三种 ABI。
+            Release 附件包括正式签名 APK、SHA-256 校验文件和签名证书指纹。
+            签名证书 SHA-256：ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34
+
+            ### 验证说明
+            正式发布必须通过本次 Android CI 的单测、Lint、AAR 构建、ABI 检查、正式签名及 SHA-256 校验。CI 通过不等同于已在目标电视上通过实机播放验证。
+          files: |
+            dist/hongguoTV-next-v0.1.3-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.3-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.3-release-certificate.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

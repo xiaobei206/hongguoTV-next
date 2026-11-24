@@ -12,7 +12,9 @@
 
 ## 当前验证状态
 
-当前开发版本为 v0.1.2：在 v0.1.1 播放兼容性与接力设置基础上，完善电视搜索页热搜榜展示和新剧日期标签；播放页采用遥控器优先的菜单显隐逻辑，并提供“播放诊断”入口与英文 Stats for Nerds 悬浮面板。菜单隐藏时控制层不参与组合，避免按钮残影；方向键、OK、返回和切集的时序仍需目标电视实测。
+当前开发版本为 v0.1.3。本版修复此前只升级官方 Maven SDK、却未接入开心果空响应恢复实现的问题：Android CI 固定检出自维护的 `openhongguo` 提交 `1e9334185a46033bcc4e3e30fc41f649958b1389`，运行 SDK Go 测试、应用诊断补丁、编译本地 AAR，再将该 AAR 注入 NEXT。V5 POST 返回 HTTP 200 空响应后，SDK 会尝试同一身份的签名、无请求体 `video_tab` GET，并严格校验当前分集；APK 打包没有指定该 AAR 会直接失败。
+
+v0.1.3 的源码修复和构建校验已经写入，但这一提交的 CI 与目标电视实机播放结果必须分别核验；不能把提交本身当作构建成功或实机播放成功的证据。v0.1.2 正式版仍保留在 [GitHub Release 下载页](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.2)。
 
 v0.1.2 已正式发布：[GitHub Release 下载页](https://github.com/xiaobei206/hongguoTV-next/releases/tag/v0.1.2)。该版本的单元测试、Android Lint、Debug 构建、Universal APK 三种 ABI 检查、正式签名 APK 构建和签名证书/SHA-256 校验均已通过。电视遥控器和实际播放仍需在目标电视上验收。
 
@@ -24,17 +26,34 @@ v0.1.0 的正式签名 APK SHA-256：`11145b0b612765dfaef40b57e191d54a6342307105
 
 ## 构建
 
-需要 JDK 17、Android SDK Platform 37（Beta 通道，仅供编译；targetSdk 仍为稳定 API 36），以及可以访问 Google Maven、Maven Central 和 Gradle Plugin Portal 的网络。
+需先编译固定版本的自维护 SDK。CI 按相同顺序执行；APK 打包不允许不带该 AAR。
 
 ```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug
+mkdir -p .build
+git clone https://github.com/xiaobei206/openhongguo .build/openhongguo
+git -C .build/openhongguo checkout 1e9334185a46033bcc4e3e30fc41f649958b1389
+python3 scripts/patch-openhongguo.py .build/openhongguo
+(cd .build/openhongguo && go test ./...)
+(cd .build/openhongguo/bindings/mobile/core && go test ./...)
+go install golang.org/x/mobile/cmd/gomobile@v0.0.0-20261011034528-197770444867
+export PATH="$(go env GOPATH)/bin:$PATH"
+gomobile init
+(cd .build/openhongguo/bindings/mobile && ./build.sh android)
+./gradlew testDebugUnitTest lintDebug assembleDebug \
+  -PpatchedOpenhongguoAar="$PWD/.build/openhongguo/bindings/mobile/android/build/outputs/aar/openhongguo-release.aar"
 ```
 
-Windows PowerShell 使用 `.gradlew.bat testDebugUnitTest lintDebug assembleDebug`。
+Windows 用户可在已配置相同 Go/NDK 环境的 WSL 中执行 SDK 构建；CI 使用相同脚本和 AAR 注入参数。
 
 CI 将单元测试、Android Lint、Debug 构建分成独立步骤，并使用 Gradle 缓存；Debug APK 使用 Android Debug 测试证书，通过 Workflow Artifact 提供下载。测试签名 APK 不等于正式发布签名，也不保证能够覆盖安装未来正式签名版本。
 
 若在 GitHub Actions Secrets 配齐四项正式签名 Secret，CI 还会从仓库根目录安全还原独立发布 JKS，构建并验证正式签名 Release APK，输出证书指纹与 SHA-256，并在结束后删除临时密钥文件。四项全部未配置时只生成测试签名版本；只配置其中一部分会明确失败。
+
+## 播放 SDK 来源
+
+- 固定源码：`xiaobei206/openhongguo@1e9334185a46033bcc4e3e30fc41f649958b1389`。
+- `scripts/patch-openhongguo.py` 用于暴露不含敏感参数的 HTTP 状态、响应长度与接口路径，并保留当前 SDK 的播放回退逻辑。
+- CI 先运行 SDK 与 mobile core 的 Go 测试，再编译本地 AAR；不会把官方 Maven AAR 用作正式打包输入。
 
 ## ABI
 

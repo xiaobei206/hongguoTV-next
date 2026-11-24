@@ -2,7 +2,7 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.2`（搜索热榜、日期标签、电视播放遥控与播放诊断）
+- **版本：** `0.1.3`（自维护播放 SDK、空响应回退与诊断构建链路；CI/实机待验收）
 - **发布候选标记：** `release: prepare v0.1.2 final`；该提交的 Android CI、正式签名与 SHA-256 校验均已成功，Release 已发布。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
@@ -18,9 +18,18 @@
 - `TvHandoffServer.kt`：旧 TV 的 TCP/NSD 接力兼容实现；`TvHandoffProtocolTest.kt` 测试协议编解码。
 - `PhoneDiagnosticClient.kt`：向发现到的开心果手机发送电视诊断报告。
 - `app/build.gradle.kts`：版本、依赖、ABI split 和根目录签名读取。
-- `gradle/libs.versions.toml`：统一依赖版本；openhongguo 已升级到 0.4.1。
+- `gradle/libs.versions.toml`：版本目录；Maven 0.4.1 只作非打包配置回退，TV APK 必须使用固定自维护 SDK `1e9334185a46033bcc4e3e30fc41f649958b1389`.
+- `scripts/patch-openhongguo.py`：对固定 SDK 应用结构化诊断扩展。
+- `.github/workflows/android.yml`：固定检出 SDK 源码、运行 Go 回归测试、编译 AAR，并将同一 AAR 注入 NEXT 所有 APK 构建。
 - `.github/workflows/android.yml`：单测、Lint、Debug 构建、ABI 观察及 APK/SHA Artifact。
 - `DEVELOPMENT-LOG-CN.md`、`CHANGELOG.md`、`SIGNING-CN.md`：日志、版本记录和签名说明。
+
+## 播放 SDK 固定版本
+
+- `xiaobei206/openhongguo@1e9334185a46033bcc4e3e30fc41f649958b1389` 是当前 TV APK 必须使用的 SDK 源码。
+- 官方 Maven `0.4.1` 只保留给 IDE 同步/非打包配置；APK 打包没有 `-PpatchedOpenhongguoAar=<path>` 时会被 Gradle 显式拒绝。
+- 构建顺序：SDK Go tests → diagnostics patch → mobile core Go tests → gomobile AAR → NEXT unit tests/Lint/ABI/Debug/Release。
+- 核心回退为 V5 空响应 → 同一身份 signed bodyless `video_tab` GET → 旧接口兼容回退，并严格匹配当前分集。
 
 ## 构建与测试现状
 - 当前工程版本为 `0.1.2`，使用独立 applicationId，可与旧版并行安装。

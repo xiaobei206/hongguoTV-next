@@ -5,6 +5,26 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val patchedOpenhongguoAar = providers.gradleProperty("patchedOpenhongguoAar").orNull
+val patchedOpenhongguoAarFile = patchedOpenhongguoAar?.let { rootProject.file(it) }
+val appPackagingRequested = gradle.startParameter.taskNames.any { taskName ->
+    val task = taskName.substringAfterLast(':')
+    task.equals("assemble", ignoreCase = true) ||
+        task.startsWith("assembleDebug", ignoreCase = true) ||
+        task.startsWith("assembleRelease", ignoreCase = true) ||
+        task.startsWith("packageDebug", ignoreCase = true) ||
+        task.startsWith("packageRelease", ignoreCase = true) ||
+        task.startsWith("bundle", ignoreCase = true)
+}
+if (appPackagingRequested && patchedOpenhongguoAarFile == null) {
+    throw GradleException(
+        "红果 TV Next 的安装包必须使用自维护 openhongguo AAR。请先按 README.md 构建 SDK，" +
+            "再添加 -PpatchedOpenhongguoAar=<openhongguo-release.aar>；不能回退到官方 Maven SDK。"
+    )
+}
+if (appPackagingRequested && patchedOpenhongguoAarFile?.isFile != true) {
+    throw GradleException("找不到自维护 openhongguo AAR：${patchedOpenhongguoAarFile?.absolutePath}")
+}
 val releaseKeyFile = rootProject.file("hongguoTV-next-release.jks")
 val signingSecretsFile = rootProject.file("signing-secrets.txt")
 val signingSecrets = Properties().apply {
@@ -64,8 +84,8 @@ android {
         applicationId = "com.xiaobei206.hongguotvnext"
         minSdk = 28
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.1.2"
+        versionCode = 4
+        versionName = "0.1.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -126,7 +146,12 @@ android {
 }
 
 dependencies {
-    implementation(libs.openhongguo) { artifact { type = "aar" } }
+    if (patchedOpenhongguoAarFile != null) {
+        implementation(files(patchedOpenhongguoAarFile))
+    } else {
+        // Only IDE sync/non-packaging tasks can use the Maven fallback.
+        implementation(libs.openhongguo) { artifact { type = "aar" } }
+    }
     implementation(libs.coroutines.android)
     implementation(libs.androidx.core)
     implementation(libs.androidx.activity.compose)
