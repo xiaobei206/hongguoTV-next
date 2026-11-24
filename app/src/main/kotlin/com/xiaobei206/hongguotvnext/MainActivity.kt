@@ -465,6 +465,8 @@ private fun BrowseScreen(
                         when {
                             feed?.loading == true -> "正在加载…"
                             feed?.error != null -> "加载遇到问题"
+                            selectedTab == TvTab.SEARCH && submittedQuery.isBlank() && model.hot != null ->
+                                "${model.hot?.boards?.sumOf { it.items.size } ?: 0} 条热搜"
                             else -> if (cards.isNotEmpty()) "${cards.size} 部" else ""
                         },
                         color = TvMuted,
@@ -538,7 +540,52 @@ private fun BrowseScreen(
                     }
                 }
 
-                if (cards.isEmpty()) {
+                if (
+                    selectedTab == TvTab.SEARCH &&
+                    submittedQuery.isBlank() &&
+                    model.hot?.boards?.any { it.items.isNotEmpty() } == true
+                ) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 160.dp),
+                        state = gridState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 30.dp, end = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(15.dp)
+                    ) {
+                        model.hot!!.boards.filter { it.items.isNotEmpty() }.forEachIndexed { boardIndex, board ->
+                            item(
+                                key = "hot-board-$boardIndex",
+                                span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }
+                            ) {
+                                Text(
+                                    board.name,
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 2.dp),
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TvText
+                                )
+                            }
+                            items(
+                                board.items,
+                                key = { hot -> "hot-$boardIndex-${hot.seriesId}-${hot.position}" }
+                            ) { hot ->
+                                CatalogCardView(
+                                    card = Card(
+                                        id = hot.seriesId,
+                                        title = hot.title,
+                                        cover = hot.coverUrl,
+                                        sub = hot.searchScore.ifEmpty { hot.heat },
+                                        rank = hot.position,
+                                        episodes = hot.episodeCount
+                                    ),
+                                    covers = covers,
+                                    onClick = { onOpenSeries(hot.seriesId) }
+                                )
+                            }
+                        }
+                    }
+                } else if (cards.isEmpty()) {
                     Column(
                         Modifier.fillMaxWidth().weight(1f).padding(24.dp),
                         verticalArrangement = Arrangement.Center
