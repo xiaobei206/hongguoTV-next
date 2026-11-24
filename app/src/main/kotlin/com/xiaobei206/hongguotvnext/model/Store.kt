@@ -7,7 +7,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
-import android.system.Os
+import java.io.IOException
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -62,8 +62,10 @@ class JSONFile<T : Any>(
                 out.write(text.toByteArray())
                 out.fd.sync()
             }
-            // POSIX rename atomically replaces the destination and is available from API 21.
-            Os.rename(tmp.absolutePath, file.absolutePath)
+            // The temporary file is in the same directory: on Android/Linux this uses
+            // POSIX rename, atomically replacing the destination on the same filesystem.
+            // File.renameTo also remains executable in the JVM persistence tests.
+            if (!tmp.renameTo(file)) throw IOException("无法原子替换 ${file.name}")
         } catch (e: Exception) {
             debugLog { "store: ${file.name}: $e" }
         }

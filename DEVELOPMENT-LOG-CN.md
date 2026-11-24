@@ -131,6 +131,14 @@
 
 - 首轮 Actions 的 SDK AAR 构建、单元测试通过；Android Lint 发现 14 个 NewApi 错误，集中在三个位置：CoverStore 无条件使用 API 28 ImageDecoder；Store 使用 API 26 java.nio.file.Files.move；TvDiscovery 使用 API 24 ConcurrentHashMap.KeySetView.clear。
 - CoverStore 改为按系统版本选择解码器：API 28+ 保留 ImageDecoder 与现有缩放逻辑；API 23-27 使用 BitmapFactory bounds + inSampleSize + 600px 限制，并对下载请求优先声明 JPEG/PNG/WebP。旧系统不支持 HEIC 时允许封面解码失败，但不影响核心浏览/播放路径。
-- JSONFile 写入仍先写同目录临时文件并 fsync，再通过 API 21+ android.system.Os.rename 原子替换目标文件，保留崩溃时不留下半截 JSON 的设计，不再触发 API 26 java.nio.file 限制。
+- JSONFile 写入先写同目录临时文件并 fsync，再用 File.renameTo 在同一文件系统原子替换目标文件；此 API 在旧 Android 可用，也能在 JVM 单测环境真实执行。
 - TvDiscovery 的 resolving 集合改为 Collections.synchronizedSet，规避 API 24 KeySetView.clear 限制；其他发现协议和并发设备映射保持不变。
 - 修复后需重新运行完整 Android CI，特别确认 API 23 Manifest、Lint、Universal ABI、Debug/正式签名 Release 与 SHA-256。
+
+
+## 2026-11-24：修正 API 23 文件替换实现的 JVM 测试兼容
+
+- 第二轮 Actions 的 SDK AAR 构建通过，但 4 个历史/session 持久化单测失败。根因是测试环境启用了 unitTests.isReturnDefaultValues，android.system.Os 被 Android 单测替身替换，Os.rename 没有执行文件系统操作。
+- JSONFile 改为对同目录临时文件调用 File.renameTo，并检查布尔返回值；Android/Linux 同文件系统 rename 会原子替换现有目标，File API 从早期 Android 即可使用，且 JVM 单测可实际验证读写。
+- 保留临时文件写入、fd.sync 和失败时清理逻辑；不通过关闭测试或跳过持久化断言规避问题。
+- 下一轮 CI 先验证 48 项单测，再执行 API 23 Lint、APK Manifest、ABI、签名与 SHA-256。

@@ -7,7 +7,7 @@
 - 使用一个 Universal APK，不拆分 Legacy / Standard 两套业务代码。
 - 统一安装最低版本为 Android 6.0（API 23），当前版本将 minSdk 设为 23。
 - 启用 Core Library Desugaring，让睡眠定时器和诊断时间戳使用的 java.time.Instant 可在 API 23 上运行。
-- API 23-27 使用 BitmapFactory 封面解码与 JPEG/PNG/WebP 请求回退，使用 Os.rename 原子保存历史/收藏，NSD 发现集合不依赖 API 24 KeySetView。
+- API 23-27 使用 BitmapFactory 封面解码与 JPEG/PNG/WebP 请求回退，使用同目录 File.renameTo 原子保存历史/收藏，NSD 发现集合不依赖 API 24 KeySetView。
 - Android CI 检查最终 APK Manifest，硬性要求 sdkVersion 为 23；依赖或 Manifest 合并若抬高最低系统版本，构建将失败。
 - API 23 代表安装与基础运行兼容，不代表老电视硬件一定支持所有 DRM、编码格式、清晰度或硬件解码能力；这些仍需实机验证。
 
