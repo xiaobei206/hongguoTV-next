@@ -31,10 +31,10 @@
 - APK、SHA-256 和 Release 链接：首轮 CI 通过后补入此处。不能用源码 commit 替代安装包或测试证据。
 
 ## 签名状态
-- 新版独立签名密钥尚未确认配置。
+- 新版独立签名密钥已实际创建并提交于仓库根目录：`hongguoTV-next-release.jks`；对应配置在根目录 `signing-secrets.txt`。CI 已改为优先读取这两份文件。
 - 本地密钥与配置文件应放项目根目录：`hongguoTV-next-release.jks`、`signing-secrets.txt`；两个文件由 `.gitignore` 排除。
-- CI 正式签名所需 Secrets：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。尚未确认已配置，不记载任何秘密值。
-- 当前 CI 预期输出为 Android Debug 测试签名 APK，不能保证覆盖安装未来的正式签名 APK。
+- 正式签名当前直接使用仓库根目录文件，不需配置 GitHub Actions Secrets；备用 Secrets 名称仍保留在 Workflow 中。
+- CI 输出 Debug 测试签名 APK 与正式签名 Release APK。两者证书不同；测试版不能直接覆盖安装正式签名版。
 
 ## 下一阶段
 1. 处理首轮 Actions 的实际构建、Lint 或测试失败。

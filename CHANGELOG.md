@@ -10,7 +10,8 @@
 - 加入播放时取消待处理 Feed 请求与封面下载的基础资源隔离。
 - 配置根目录发布签名读取、私密文件忽略规则和 GitHub Actions 构建工作流。
 - 为 Media3 使用位置补充 AndroidX Lint 可识别的 opt-in 标注；修正不完整签名配置不阻断 Debug 开发，但拒绝无正式签名的 Release 打包。该修复仍待 CI 复验。
-- CI 测试、Lint 拆成独立步骤并加入 Gradle 缓存；支持四项签名 Secrets 完整配置时产生正式签名 Release Artifact，缺少正式签名 Secrets 时明确只生成 Debug 测试签名 APK。
+- CI 测试、Lint 拆成独立步骤并加入 Gradle 缓存。
+- 按自用项目要求，在仓库根目录实际加入独立 `hongguoTV-next-release.jks` 与 `signing-secrets.txt`，并令 CI 优先使用根目录这两份文件产生正式签名 Release Artifact。
 - CI 要求 Universal APK 实际包含 x86_64、arm64-v8a、armeabi-v7a 三种 ABI 的 native libraries，且每种 ABI 均包含 openhongguo 的 libgojni.so。
 
 ### 验证状态

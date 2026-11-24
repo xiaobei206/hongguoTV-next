@@ -5,14 +5,15 @@ local.properties
 .idea/
 *.iml
 
-# Signing materials must stay local and outside public history
-hongguoTV-next-release.jks
-signing-secrets.txt
+# Alternative/local signing files are ignored. The two root-level files below are
+# intentionally tracked for this personal-use project as requested.
 keystore.properties
 *.jks
 *.keystore
 *.p12
 *.pfx
+!hongguoTV-next-release.jks
+!signing-secrets.txt
 
 # Generated outputs
 dist/

@@ -70,3 +70,12 @@
 - 新的 ABI 检查修订 #17/#18 以零 job、零 check-run 在创建后立即失败，表明 Workflow 在 runner 分配前未被正常加载。为避免继续局部编辑一个可能已损坏的 YAML 文件，恢复到已被 #16 实际执行、单测/Lint/assembleDebug 都成功的 workflow 基线，然后只替换 ABI 检查区块。
 - 新块直接检查 Universal APK 的 ZIP 条目，验证三个 ABI 的本地库和每个 ABI 的 `libgojni.so`；其余测试、Lint、签名和 Artifact 步骤沿用已执行过的工作流。
 - 下一次 CI 的首要验证是 workflow 正常生成 job；仍需确认 ABI 检查与 Artifact 上传成功。
+
+
+## 2026-11-24：按项目要求在仓库根目录补齐实际签名文件
+
+- 已在新版仓库根目录生成并加入独立的 `hongguoTV-next-release.jks` 与 `signing-secrets.txt`，不再只提供 Gradle 读取逻辑或要求用户另行创建。
+- JKS 是新生成的独立 RSA 发布证书（alias `hongguotv-next-release`），不复制开心果或旧 TV 的密钥。
+- GitHub Actions 签名步骤优先使用这两个根目录文件；只有两者确实不存在时才退回 Actions Secrets 流程。自用项目的正式签名构建不再依赖额外配置 Secrets。
+- 工作流上传 APK、校验文件与证书信息，不将 JKS/属性文件作为 Artifact；旧的两个参考仓库未修改。
+- 正式签名首个 CI 构建与最终 SHA-256 需要由新一次 Actions 确认。

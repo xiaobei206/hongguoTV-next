@@ -159,6 +159,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          root_keystore="$GITHUB_WORKSPACE/hongguoTV-next-release.jks"
+          root_secrets="$GITHUB_WORKSPACE/signing-secrets.txt"
+          if [[ -f "$root_keystore" && -f "$root_secrets" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Using the root-level signing key and signing-secrets.txt from this personal-use project."
+            exit 0
+          fi
+          if [[ -f "$root_keystore" || -f "$root_secrets" ]]; then
+            echo "::error::Only one root-level signing file exists. Both hongguoTV-next-release.jks and signing-secrets.txt are required."
+            exit 1
+          fi
+
           count=0
           for value in "$ANDROID_KEYSTORE_BASE64" "$ANDROID_KEYSTORE_PASSWORD" "$ANDROID_KEY_ALIAS" "$ANDROID_KEY_PASSWORD"; do
             if [[ -n "$value" ]]; then count=$((count + 1)); fi

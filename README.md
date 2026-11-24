@@ -47,9 +47,9 @@ ANDROID_KEY_ALIAS=
 ANDROID_KEY_PASSWORD=
 ```
 
-这两个文件及其他 JKS/keystore/P12/PFX 已列入 `.gitignore`，绝不能提交到公开仓库或上传为构建 Artifact。密钥缺失或只配置了部分签名文件时，Debug 测试构建、测试和 Lint 仍可执行；显式请求 Release 包时，如果正式签名不完整会报出具体缺项，不会静默用 Debug 签名冒充正式 Release 签名。
+本自用项目已按要求将 `hongguoTV-next-release.jks` 与 `signing-secrets.txt` 实际放在仓库根目录，CI 直接读取这两份文件生成正式签名 APK。其他本地密钥文件仍由 `.gitignore` 忽略；构建 Artifact 只包含 APK、SHA-256 与证书信息，不包含密钥文件本身。
 
-正式签名 CI 预留 Secrets：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`。当前是否已配置以仓库 Actions 设置为准。
+根目录签名文件已实际存在，日常 CI 无需额外配置 Actions Secrets。若以后想改用 Secrets 签名，Workflow 仍保留 `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD` 的备用读取逻辑。
 
 ## 官方参考
 
