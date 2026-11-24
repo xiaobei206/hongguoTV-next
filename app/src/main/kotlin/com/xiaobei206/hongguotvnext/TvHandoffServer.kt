@@ -62,8 +62,13 @@ class TvHandoffServer(context: Context) {
         private set
 
     @Volatile
+    var enabled: Boolean = prefs.getBoolean("enabled", true)
+        private set
+
+    @Volatile
     var listener: ((TvHandoffRequest, (TvHandoffReply) -> Unit) -> Unit)? = null
 
+    @Volatile private var foreground = false
     @Volatile private var available = false
     @Volatile private var serverSocket: ServerSocket? = null
     @Volatile private var serverPort = 0
@@ -91,14 +96,24 @@ class TvHandoffServer(context: Context) {
         }
     }
 
-    fun setAvailable(value: Boolean) {
-        available = value
+    /** Persistent user preference. New installs default to enabled. */
+    fun setEnabled(value: Boolean) {
+        enabled = value
+        prefs.edit().putBoolean("enabled", value).apply()
+        updateAvailability()
+    }
+
+    /** NSD advertisement is only active while the Activity is in the foreground. */
+    fun setForeground(value: Boolean) {
+        foreground = value
+        updateAvailability()
+    }
+
+    private fun updateAvailability() {
+        val shouldAdvertise = foreground && enabled
+        available = shouldAdvertise
         executor.execute {
-            if (value) {
-                registerService()
-            } else {
-                unregisterService()
-            }
+            if (shouldAdvertise) registerService() else unregisterService()
         }
     }
 
@@ -117,6 +132,7 @@ class TvHandoffServer(context: Context) {
     }
 
     fun stop() {
+        foreground = false
         available = false
         unregisterService()
         runCatching { serverSocket?.close() }
