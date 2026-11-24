@@ -61,8 +61,21 @@ jobs:
       - name: Run unit tests
         run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
 
-      - name: Run Android Lint
-        run: ./gradlew --no-daemon --stacktrace lintDebug
+      - name: Run Android Lint and print report
+        shell: bash
+        run: |
+          set +e
+          ./gradlew --no-daemon --stacktrace lintDebug
+          result=$?
+          set -e
+          report="$(find app/build -type f -name 'lint-results-debug.txt' -print -quit)"
+          if [[ -n "$report" ]]; then
+            echo "Full Android Lint report: $report"
+            cat "$report"
+          else
+            echo "Android Lint report was not generated." >&2
+          fi
+          exit "$result"
 
       - name: Build test-signed APKs
         run: ./gradlew --no-daemon --stacktrace assembleDebug

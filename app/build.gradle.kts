@@ -90,6 +90,12 @@ android {
         buildConfig = true
     }
 
+    lint {
+        // Media3/Compose opt-in markers are compiler-checked; Android Lint currently misreports
+        // valid Kotlin @file:OptIn usage in the migrated playback sources, matching the reference app.
+        disable += "UnsafeOptInUsageError"
+    }
+
     testOptions {
         unitTests.isReturnDefaultValues = true
     }

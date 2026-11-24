@@ -35,3 +35,10 @@
 - 加入完整的 AAR JNI 条目盘点、三个目标 ABI 单独 APK 输出检查、Universal APK 验证、测试证书信息与 SHA-256 文件。
 - CI 正式签名设计为可选但严格：四个 Secrets 全空时只出测试签名包；部分配置时报错；四项齐全时将 JKS 与 `signing-secrets.txt` 安全还原到仓库根目录，调用与本地一致的 Gradle release signing，验证证书并计算 SHA-256；临时文件始终在结束步骤清理，且不上传到 Artifact。
 - 截止本日志条目，以上 workflow 变更已提交，必须以新一次 Actions 的最终结果验证。APK/Release/SHA 尚未宣称成功。
+
+
+## 2026-11-24：Lint opt-in false positives
+
+- 第 14 次 Actions 中单测全部通过；Lint 汇总为 96 errors、26 warnings、1 hint。首个错误是 `UnsafeOptInUsageError`，指向迁移自开心果且已使用文件级 `@file:OptIn(UnstableApi::class)` 的 Media3 源码。
+- 开心果原工程本身已在其 `app/build.gradle.kts` 针对 `UnsafeOptInUsageError` 配置了 Lint disable；新版对齐这一已验证设置，不关闭整个 Lint，Kotlin 编译器仍会检查实际的 opt-in 使用。
+- CI 的 Lint 步骤现在会在任务结束后打印完整文本报告，以便若仍有其他问题可以按 issue 和文件逐项修复。此次修复尚待下一轮 Actions 验证。
