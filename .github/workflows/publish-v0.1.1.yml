@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   publish:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && contains(github.event.workflow_run.head_commit.message, 'release: prepare v0.1.1') }}
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && contains(github.event.workflow_run.head_commit.message, 'release: prepare v0.1.1') }}"
     runs-on: ubuntu-latest
     steps:
       - name: Download signed APK from the successful CI run
