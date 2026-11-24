@@ -2,8 +2,8 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.4`（统一 APK 最低 Android 6.0/API 23；最终发布标记提交待 CI 复验，目标电视待实机验收）
-- **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.3 是此前正式发布版本。
+- **版本：** `0.1.5`（封面加载修复；CI 与目标电视待验收）
+- **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
@@ -59,3 +59,9 @@
 4. 用实际手机测试 `_hongguotv._tcp.` 服务发现、接力请求与成功/失败确认。
 5. 处理 `libgojni.so` 的 16 KB 页面对齐警告；当前仅记录，尚未解决。
 6. 在目标电视上验收 v0.1.2 播放/遥控器，并用真实手机回归设备接力。
+
+
+## v0.1.5 封面修复
+- 对照旧 TV 的 `TvArtworkLoader.candidateUrls`，发现 NEXT 迁移时漏掉了 ByteDance CDN 的 JPEG 回退；本版恢复该逻辑，并增加原始 signed URL 后备。
+- 诊断页现在会显示封面成功/失败数量及最近失败原因。
+- 需在小米 E55A、E55S 和东芝 75U6900C 实机检查首页、排行榜、新剧、热搜和详情页封面。

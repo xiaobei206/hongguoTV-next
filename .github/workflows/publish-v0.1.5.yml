@@ -1,0 +1,107 @@
+name: Publish v0.1.5 formal release
+
+on:
+  workflow_run:
+    workflows: ["Android CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact Android CI source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check whether this commit is the final release marker
+        id: release-marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log -1 --format=%B | grep -Fq 'release: prepare v0.1.5 final'; then
+            echo "matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches=false" >> "$GITHUB_OUTPUT"
+            echo "This successful CI run is not the final v0.1.5 release candidate."
+          fi
+
+      - name: Ensure this is still the latest main commit
+        id: current-head
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          if [[ "$current" == "$TARGET_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale release candidate $TARGET_SHA; main is now $current."
+          fi
+
+      - name: Download signed APK from the successful CI run
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.5-formal-release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.5-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.5-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.5-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.5-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.5-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.5
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: 红果 TV Next v0.1.5
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 红果 TV Next v0.1.5
+
+            ### Android 6.0 统一兼容
+            - 一个 Universal APK，最低系统版本为 Android 6.0（API 23），不拆分独立 Legacy / Standard 代码库。
+            - Core Library Desugaring 为睡眠定时器、历史记录与诊断中的 java.time 提供旧系统兼容。
+            - Android 9+ 保留 ImageDecoder；Android 6.0-8.1 使用 BitmapFactory 的有界解码回退，并优先请求 JPEG/PNG/WebP 封面。
+            - 历史/收藏/session JSON 先写同目录临时文件并 fsync，再通过 File.renameTo 原子替换；电视设备发现集合使用 API 23 可用的同步集合。
+            - 保留 Media3 1.11.1、自维护 openhongguo AAR、CENC 播放与三种 ABI，不为降低最低系统版本替换播放器。
+
+            ### 构建与校验
+            - Android CI 必须通过 SDK Go 测试、应用单元测试、Android Lint、APK Manifest 最低 SDK API 23 检查、三种 ABI 检查、正式签名验证和 SHA-256 校验。
+            - Universal APK 包含 x86_64、arm64-v8a、armeabi-v7a。
+            - 正式证书 SHA-256：ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34
+
+            ### 封面修复
+            - 恢复旧 TV 已验证的 byteimg/fqnovelpic JPEG CDN 回退，原始签名 URL 保留为后备；增加 User-Agent、重定向与候选逐个解码，封面失败摘要可从诊断页复制。
+
+            ### 实机说明
+            API 23 只保证系统安装门槛；DRM/Widevine、安全级别、视频编码器、芯片硬解和遥控器焦点仍需在小米 E55A、东芝 75U6900C 等实机验收。CI 通过不等于所有视频格式均能在旧电视上硬解。
+          files: |
+            dist/hongguoTV-next-v0.1.5-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.5-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.5-release-certificate.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

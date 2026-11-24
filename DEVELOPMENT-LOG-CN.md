@@ -1,3 +1,13 @@
+## 2026-11-25：v0.1.5 TV 封面加载修复
+
+- 用户实机反馈 v0.1.4 所有封面都不显示，按最高优先级排查封面 URL → HTTP → 解码 → 缓存 → Compose 显示链路。
+- 对比旧版 `hongguoTV/TvArtworkLoader.kt` 后，确认 NEXT 的 `CoverStore` 漏迁了旧 TV 已有的 CDN URL 回退：byteimg/fqnovelpic 的 `~tplv-obj.image` 需要优先尝试 `~tplv-noop.jpeg`，novel-pic/novel-static 需要稳定 JPEG 变体。NEXT 此前只修改 Accept 头并直接解码原 URL；当 CDN 返回设备不支持的格式时，所有封面会静默失败。
+- 恢复旧 TV 的候选 URL 顺序，先尝试 JPEG，再保留原始签名地址；HTTP URL 优先升级 HTTPS，失败时再回退原始 URL。
+- 增加 User-Agent、重定向跟随、候选逐一下载/解码、坏磁盘缓存清理、缓存压缩/替换结果检查，以及 16 MiB 下载限制。
+- 增加封面诊断计数和最近错误摘要；诊断报告不会输出完整 URL/query 签名。
+- 新增 CoverUrlTest，覆盖 byteimg 动态图片、novel-pic、HTTP→HTTPS 与空/不支持协议场景。
+- 版本提升为 v0.1.5 / versionCode 6。源码变更不视为修复完成，仍以 Actions 和用户电视实机结果验证。
+
 # 开发日志（持续累积）
 
 ## 2026-11-24：v0.1.4 将最低系统版本下调至 Android 6.0

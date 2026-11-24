@@ -203,6 +203,7 @@ class MainActivity : ComponentActivity() {
                     )
                     TvScreen.DIAGNOSTICS -> DiagnosticsScreen(
                         model = model,
+                        covers = tvApp.covers,
                         onBack = { screen = TvScreen.BROWSE }
                     )
                     TvScreen.SETTINGS -> SettingsScreen(
@@ -1057,11 +1058,15 @@ private fun DeviceScreen(
 }
 
 @Composable
-private fun DiagnosticsScreen(model: AppModel?, onBack: () -> Unit) {
+private fun DiagnosticsScreen(
+    model: AppModel?,
+    covers: com.xiaobei206.hongguotvnext.covers.CoverStore?,
+    onBack: () -> Unit
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var transferState by remember { mutableStateOf("尚未发送诊断") }
-    val report = remember(model, model?.player?.state) {
+    val report = remember(model, model?.player?.state, covers) {
         buildString {
             appendLine("红果 TV Next v${BuildConfig.VERSION_NAME}")
             appendLine("ApplicationId: ${BuildConfig.APPLICATION_ID}")
@@ -1069,6 +1074,7 @@ private fun DiagnosticsScreen(model: AppModel?, onBack: () -> Unit) {
             appendLine("播放状态: ${model?.player?.state}")
             appendLine("SDK 诊断: ${runCatching { com.xiaobei206.hongguotvnext.model.SdkDiagnostics.snapshot() }.getOrNull()}")
             appendLine("播放诊断: ${runCatching { PlaybackDiagnostics.snapshot() }.getOrNull()}")
+            appendLine("封面诊断: ${covers?.diagnosticSummary() ?: "封面服务不可用"}")
         }
     }
     Column(

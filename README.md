@@ -7,7 +7,7 @@
 - 使用一个 Universal APK，不拆分 Legacy / Standard 两套业务代码。
 - 统一安装最低版本为 Android 6.0（API 23），当前版本将 minSdk 设为 23。
 - 启用 Core Library Desugaring，让睡眠定时器和诊断时间戳使用的 java.time.Instant 可在 API 23 上运行。
-- API 23-27 使用 BitmapFactory 封面解码与 JPEG/PNG/WebP 请求回退，使用同目录 File.renameTo 原子保存历史/收藏，NSD 发现集合不依赖 API 24 KeySetView。
+- API 23-27 使用 BitmapFactory 有界解码；ByteDance CDN 封面优先请求 JPEG 派生地址并保留原始签名 URL 回退，使用同目录 File.renameTo 原子保存历史/收藏，NSD 发现集合不依赖 API 24 KeySetView。
 - Android CI 检查最终 APK Manifest，硬性要求 sdkVersion 为 23；依赖或 Manifest 合并若抬高最低系统版本，构建将失败。
 - API 23 代表安装与基础运行兼容，不代表老电视硬件一定支持所有 DRM、编码格式、清晰度或硬件解码能力；这些仍需实机验证。
 
@@ -21,7 +21,7 @@
 
 ## 当前验证状态
 
-当前开发版本为 v0.1.4。统一安装包的最低系统要求已设为 Android 6.0（API 23），并加入 Core Library Desugaring、旧版封面解码与文件/NSD 兼容实现。正式发布由带 release 标记的提交对应的 Android CI 全部通过后自动完成；老电视实机安装/播放仍需单独验收。本版修复此前只升级官方 Maven SDK、却未接入开心果空响应恢复实现的问题：Android CI 固定检出自维护的 `openhongguo` 提交 `1e9334185a46033bcc4e3e30fc41f649958b1389`，运行 SDK Go 测试、应用诊断补丁、编译本地 AAR，再将该 AAR 注入 NEXT。V5 POST 返回 HTTP 200 空响应后，SDK 会尝试同一身份的签名、无请求体 `video_tab` GET，并严格校验当前分集；APK 打包没有指定该 AAR 会直接失败。
+当前开发版本为 v0.1.5。统一安装包的最低系统要求已设为 Android 6.0（API 23），并加入 Core Library Desugaring、旧版封面解码与文件/NSD 兼容实现。正式发布由带 release 标记的提交对应的 Android CI 全部通过后自动完成；老电视实机安装/播放仍需单独验收。本版修复此前只升级官方 Maven SDK、却未接入开心果空响应恢复实现的问题：Android CI 固定检出自维护的 `openhongguo` 提交 `1e9334185a46033bcc4e3e30fc41f649958b1389`，运行 SDK Go 测试、应用诊断补丁、编译本地 AAR，再将该 AAR 注入 NEXT。V5 POST 返回 HTTP 200 空响应后，SDK 会尝试同一身份的签名、无请求体 `video_tab` GET，并严格校验当前分集；APK 打包没有指定该 AAR 会直接失败。
 
 v0.1.3 的播放空响应修复已通过 Android CI 并正式发布；SDK 空响应回退的目标电视实播仍需在设备上验证。不能把 CI 构建成功等同于特定电视的硬件解码或播放成功。
 
@@ -99,3 +99,6 @@ ANDROID_KEY_PASSWORD=
 - [版本变更](CHANGELOG.md)
 - [交接索引](HANDOFF-CN.md)
 - [签名说明](SIGNING-CN.md)
+
+
+v0.1.5 重点修复封面：对照旧 TV 的实际封面加载代码，恢复 byteimg/fqnovelpic 的 JPEG URL 转换与原图后备、增加 User-Agent 和重定向处理，并把封面失败原因纳入应用诊断。新增 URL 回退单元测试。CI 和正式 Release 完成后再更新此处的实际结果。

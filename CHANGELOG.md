@@ -1,4 +1,12 @@
-# Changelog
+# 更新日志
+
+## v0.1.5
+- 修复 TV 封面加载：恢复旧 TV 客户端验证过的 ByteDance CDN JPEG URL 回退（`~tplv-obj.image` → `~tplv-noop.jpeg`），覆盖 novel-pic / novel-static 地址，并保留原始签名 URL 作为后备。
+- HTTP 封面请求增加明确的 User-Agent、图片格式协商与重定向跟随；单个候选下载/解码失败后继续尝试下一候选。
+- 清理无法解码的磁盘缓存；检查 JPEG 压缩/缓存替换是否成功；限制异常大的封面响应。
+- Android 诊断报告加入封面成功/失败计数和最近失败原因。
+- 增加封面 URL 回退规则单元测试；版本提升到 0.1.5 / versionCode 6。
+
 
 ## v0.1.4 — Android 6.0 / API 23 统一兼容（最终发布候选；CI 与实机验收分开）
 
