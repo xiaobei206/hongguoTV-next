@@ -2,12 +2,13 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.1`（播放修复与接力开关，CI 验证中）
+- **版本：** `0.1.2`（电视遥控器播放器、播放诊断与热搜/日期 UI，CI 验证中）
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
 ## 重要文件
-- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/MainActivity.kt`：TV 主流程和设备接力回调。
+- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/MainActivity.kt`：TV 主流程、搜索热搜/日期标签和设备接力回调。
+- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvPlayerScreen.kt`：电视播放器遥控状态机、自动隐藏控制栏与 STATS FOR NERDS 悬浮层。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvApplication.kt`：SDK、AppModel、CoverStore、Media3 和接力服务生命周期。
 - `model/`：开心果的模型、Feed、分页、收藏/历史、搜索和播放状态机。
 - `covers/CoverStore.kt`：封面内存/磁盘缓存与 URL 请求去重。
@@ -21,11 +22,11 @@
 - `DEVELOPMENT-LOG-CN.md`、`CHANGELOG.md`、`SIGNING-CN.md`：日志、版本记录和签名说明。
 
 ## 构建与测试现状
-- 当前工程版本为 `0.1.1`，使用独立 applicationId，可与旧版并行安装。
+- 当前工程版本为 `0.1.2`，使用独立 applicationId，可与旧版并行安装。
 - [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533) 全部成功：单测、Lint、Debug APK、ABI 检查、正式 Release APK、签名证书验证及 SHA-256。
 - Actions 已将测试与 Lint 分成独立步骤并加入 Gradle 缓存；完整配置可选的四个签名 Secrets 后可走正式签名 Artifact 路径。
 - 开心果的数据模型、Feed、存储、播放/CENC、封面缓存及核心测试已迁移；实际构建结果以 [Actions](https://github.com/xiaobei206/hongguoTV-next/actions) 为准。
-- UI 接通当前核心流程；真实焦点循环、返回后精确恢复焦点/滚动位置、遥控器体验需模拟器/电视测试。
+- v0.1.2 的遥控器映射已实现但尚未真机验收：菜单隐藏时左右快退/快进、上下切集；OK 首次唤出菜单，下一次暂停并聚焦播放按钮；控制栏可导航；菜单超时后不再组合任何控制按钮。
 - 接力协议已经保留关键字段并增加纯协议测试，尚不能据此宣称与实际手机通信通过。
 - 当前 Gradle 实际产出 Universal APK。CI 会检查该 APK 内 x86_64、arm64-v8a、armeabi-v7a 的 native libraries 以及每种 ABI 的 openhongguo libgojni.so；模拟器/真机安装仍是后续验收项。
 - v0.1.0 正式签名 APK：`hongguoTV-next-v0.1.0-universal-release-signed.apk`；SHA-256：`11145b0b612765dfaef40b57e191d54a63423071058c8a393c6b43e22b3c9dbb`。v0.1.1 将在 CI 完成并验证签名后发布。
