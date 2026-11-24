@@ -43,6 +43,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
@@ -61,6 +62,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -123,10 +125,12 @@ class MainActivity : ComponentActivity() {
     private var tab by mutableStateOf(TvTab.RECOMMEND)
     private var detailId by mutableStateOf("")
     private var playerReturnScreen by mutableStateOf(TvScreen.BROWSE)
+    private var handoffEnabled by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        handoffEnabled = tvApp.handoffServer?.enabled ?: true
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(
                 primary = TvAccent,
@@ -190,6 +194,8 @@ class MainActivity : ComponentActivity() {
                     } else StartupProblem(tvApp.startupError)
                     TvScreen.DEVICE -> DeviceScreen(
                         server = tvApp.handoffServer,
+                        enabled = handoffEnabled,
+                        onEnabledChange = ::setHandoffEnabled,
                         onBack = { screen = TvScreen.BROWSE }
                     )
                     TvScreen.DIAGNOSTICS -> DiagnosticsScreen(
@@ -197,6 +203,8 @@ class MainActivity : ComponentActivity() {
                         onBack = { screen = TvScreen.BROWSE }
                     )
                     TvScreen.SETTINGS -> SettingsScreen(
+                        handoffEnabled = handoffEnabled,
+                        onHandoffEnabledChange = ::setHandoffEnabled,
                         onBack = { screen = TvScreen.BROWSE }
                     )
                 }
@@ -231,8 +239,8 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         tvApp.handoffServer?.let { server ->
-            server.listener = ::handleHandoffRequest
-            server.setAvailable(true)
+            server.listener = if (server.enabled) ::handleHandoffRequest else null
+            server.setForeground(true)
         }
         tvApp.model?.player?.returnToApp()
     }
@@ -240,7 +248,7 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         tvApp.handoffServer?.let { server ->
             server.listener = null
-            server.setAvailable(false)
+            server.setForeground(false)
         }
         tvApp.model?.let { model ->
             model.player.leaveApp()
@@ -248,6 +256,17 @@ class MainActivity : ComponentActivity() {
             model.flush()
         }
         super.onStop()
+    }
+
+    private fun setHandoffEnabled(value: Boolean) {
+        handoffEnabled = value
+        val server = tvApp.handoffServer ?: return
+        server.setEnabled(value)
+        server.listener = if (value && lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            ::handleHandoffRequest
+        } else {
+            null
+        }
     }
 
     private fun handleHandoffRequest(
@@ -846,7 +865,42 @@ private fun playerStateLabel(state: PlayerState): String = when (state) {
 }
 
 @Composable
-private fun DeviceScreen(server: TvHandoffServer?, onBack: () -> Unit) {
+private fun HandoffToggleRow(
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+    controlEnabled: Boolean = true
+) {
+    Row(
+        Modifier.fillMaxWidth().background(TvPanel, RoundedCornerShape(12.dp)).padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text("设备接力（手机投屏）", fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                if (enabled) "已开启：应用在前台时，手机可以发现电视并发送播放任务。"
+                else "已关闭：停止广播接力服务，也不接收手机投屏任务。",
+                color = TvMuted,
+                fontSize = 14.sp
+            )
+        }
+        Switch(
+            checked = enabled,
+            onCheckedChange = onEnabledChange,
+            enabled = controlEnabled
+        )
+    }
+}
+
+@Composable
+private fun DeviceScreen(
+    server: TvHandoffServer?,
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+    onBack: () -> Unit
+) {
     val context = LocalContext.current
     var name by remember(server?.displayName) { mutableStateOf(server?.displayName.orEmpty()) }
     Column(
@@ -855,7 +909,7 @@ private fun DeviceScreen(server: TvHandoffServer?, onBack: () -> Unit) {
     ) {
         Text("设备接力", fontSize = 34.sp, fontWeight = FontWeight.Bold)
         Text("电视通过局域网服务发现与 TCP JSON 协议接收手机播放任务。", color = TvMuted, fontSize = 19.sp)
-        Text("接力广播服务：${server?.let { "已初始化" } ?: "未初始化"}", fontSize = 18.sp)
+        HandoffToggleRow(enabled, onEnabledChange, controlEnabled = server != null)
         Text("设备编号：${server?.shortCode ?: "—"}", fontSize = 18.sp)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
@@ -870,12 +924,8 @@ private fun DeviceScreen(server: TvHandoffServer?, onBack: () -> Unit) {
                 ).show()
             }, enabled = server != null) { Text("保存名称") }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = { server?.setAvailable(true) }, enabled = server != null) { Text("开启发现") }
-            TextButton(onClick = { server?.setAvailable(false) }, enabled = server != null) { Text("关闭发现") }
-            TextButton(onClick = onBack) { Text("返回") }
-        }
-        Text("真实手机发现与任务播放确认仍需在同一局域网的设备上测试。", color = TvMuted, fontSize = 15.sp)
+        TextButton(onClick = onBack) { Text("返回") }
+        Text("启用状态会保存；默认开启。为避免后台占用，只有应用在前台时才广播发现。", color = TvMuted, fontSize = 15.sp)
     }
 }
 
@@ -928,7 +978,11 @@ private fun DiagnosticsScreen(model: AppModel?, onBack: () -> Unit) {
 }
 
 @Composable
-private fun SettingsScreen(onBack: () -> Unit) {
+private fun SettingsScreen(
+    handoffEnabled: Boolean,
+    onHandoffEnabledChange: (Boolean) -> Unit,
+    onBack: () -> Unit
+) {
     Column(
         Modifier.fillMaxSize().background(TvBackground).padding(36.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -937,7 +991,11 @@ private fun SettingsScreen(onBack: () -> Unit) {
         Text("版本：${BuildConfig.VERSION_NAME}", fontSize = 19.sp)
         Text("应用 ID：${BuildConfig.APPLICATION_ID}", fontSize = 17.sp, color = TvMuted)
         Text("当前为与旧红果 TV 并行安装的独立应用。", fontSize = 18.sp, color = TvMuted)
-        Text("发布签名文件位于工程根目录；正式密钥不会内置在 APK 或公开仓库。", fontSize = 17.sp, color = TvMuted)
+        HandoffToggleRow(
+            enabled = handoffEnabled,
+            onEnabledChange = onHandoffEnabledChange
+        )
+        Text("设备接力开关默认开启，设置会保存到本机；关闭后电视不会广播发现，也不会接收接力任务。", fontSize = 16.sp, color = TvMuted)
         TextButton(onClick = onBack) { Text("返回") }
     }
 }
