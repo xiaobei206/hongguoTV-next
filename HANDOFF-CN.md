@@ -24,6 +24,7 @@
 - `scripts/patch-openhongguo.py`：对固定 SDK 应用结构化诊断扩展。
 - `.github/workflows/android.yml`：固定检出 SDK 源码、运行 Go 回归测试、编译 AAR，并将同一 AAR 注入 NEXT 所有 APK 构建。
 - `.github/workflows/android.yml`：单测、Lint、Debug 构建、ABI 观察及 APK/SHA Artifact。
+- `.github/workflows/publish-v0.1.11.yml`：仅当 v0.1.11 最终标记提交的 Android CI 全部成功后，下载同一次 CI 的正式签名 APK，校验证书和 SHA-256，再创建 `v0.1.11` GitHub Release。
 - `DEVELOPMENT-LOG-CN.md`、`CHANGELOG.md`、`SIGNING-CN.md`：日志、版本记录和签名说明。
 
 ## 播放 SDK 固定版本
