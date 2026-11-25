@@ -8,6 +8,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -83,9 +84,9 @@ private val PlayerHudMuted = Color(0xFFA7B0BA)
 
 /**
  * TV-first player controls:
- * - hidden HUD: left/right seek, up/down change episode, OK reveals the HUD
- * - HUD visible without button focus: left/right still seek; OK pauses and focuses Play/Pause
- * - button focus: OK activates buttons, arrows navigate controls
+ * - hidden HUD: left/right seek, up/down change episode; OK opens the menu
+ * - opening the HUD focuses Play/Pause; left/right then navigate the control row
+ * - OK activates the focused action; the HUD hides after 12 seconds without interaction
  */
 @androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 @Composable
@@ -209,7 +210,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                             player.skip(-10.0)
                             showSeekHint("−10s")
                             if (menuVisible) {
-                                hideDelayMs = 3_000L
+                                hideDelayMs = 12_000L
                                 timerKey++
                             }
                             true
@@ -221,7 +222,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                             player.skip(10.0)
                             showSeekHint("+10s")
                             if (menuVisible) {
-                                hideDelayMs = 3_000L
+                                hideDelayMs = 12_000L
                                 timerKey++
                             }
                             true
@@ -423,7 +424,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                     }
 
                     Row(
-                        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        Modifier.fillMaxWidth().focusGroup().horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
