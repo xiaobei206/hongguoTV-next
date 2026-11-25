@@ -2,7 +2,7 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.16`（图标素材保持 v0.1.15 不变；播放器确认键召出菜单后聚焦播放/暂停，保留旧超时；详情页默认聚焦继续播放，右移按观看历史定位选集；季卡完整显示总集数；待 CI 与实机验收）
+- **版本：** `0.1.17`（图标素材保持 v0.1.15 不变；修复候选版的 Compose 按键 API 编译错误；播放器确认键召出菜单后聚焦播放/暂停，保留旧超时；详情页默认聚焦继续播放，右移按观看历史定位选集；季卡完整显示总集数；待 CI 与实机验收）
 - **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
@@ -16,7 +16,8 @@
 - `.github/workflows/publish-v0.1.13.yml`：v0.1.13 历史正式发布流程。
 - `.github/workflows/publish-v0.1.14.yml`：v0.1.14 历史正式发布流程。
 - `.github/workflows/publish-v0.1.15.yml`：v0.1.15 历史正式发布流程。
-- `.github/workflows/publish-v0.1.16.yml`：仅在 v0.1.16 最终标记提交对应的 Android CI 成功后，校验正式签名 APK、证书与 SHA-256 并创建正式 Release。
+- `.github/workflows/publish-v0.1.16.yml`：v0.1.16 首轮 CI 编译失败，未创建正式 Release。
+- `.github/workflows/publish-v0.1.17.yml`：仅在 v0.1.17 最终标记提交对应的 Android CI 成功后，校验正式签名 APK、证书与 SHA-256 并创建正式 Release。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvApplication.kt`：SDK、AppModel、CoverStore、Media3 和接力服务生命周期。
 - `model/`：开心果的模型、Feed、分页、收藏/历史、搜索和播放状态机。
 - `covers/CoverStore.kt`：封面内存/磁盘缓存与 URL 请求去重。

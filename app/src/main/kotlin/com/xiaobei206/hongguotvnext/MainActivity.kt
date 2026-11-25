@@ -75,7 +75,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.nativeKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.draw.clipToBounds
@@ -1011,22 +1010,28 @@ private fun DetailScreen(
     val episodeGridState = rememberLazyGridState()
     val episodeFocusRequesters = remember(seriesId) { mutableStateMapOf<Int, FocusRequester>() }
     val detailScope = rememberCoroutineScope()
+    var episodeEntryPending by remember(seriesId) { mutableStateOf(false) }
 
     fun focusPreferredEpisode() {
+        if (episodeEntryPending) return
         val episodes = page.episodes
         if (episodes.isEmpty()) return
+        episodeEntryPending = true
         val savedEpisode = model.history.get(seriesId)?.episode
         val targetEpisode = savedEpisode?.takeIf { target -> episodes.any { it.number == target } }
-            ?: episodes.firstOrNull()?.number
-            ?: return
+            ?: episodes.first().number
         val targetIndex = episodes.indexOfFirst { it.number == targetEpisode }.coerceAtLeast(0)
         focusedEpisode = targetEpisode
         detailScope.launch {
-            episodeGridState.scrollToItem(targetIndex)
-            val targetRequester = withTimeoutOrNull(1_500L) {
-                snapshotFlow { episodeFocusRequesters[targetEpisode] }.first { it != null }
+            try {
+                episodeGridState.scrollToItem(targetIndex)
+                val targetRequester = withTimeoutOrNull(1_500L) {
+                    snapshotFlow { episodeFocusRequesters[targetEpisode] }.first { it != null }
+                }
+                targetRequester?.let { requester -> runCatching { requester.requestFocus() } }
+            } finally {
+                episodeEntryPending = false
             }
-            targetRequester?.let { requester -> runCatching { requester.requestFocus() } }
         }
     }
 
@@ -1034,7 +1039,7 @@ private fun DetailScreen(
     // at the remembered episode, or episode 1 when no usable history exists for this season.
     val episodeEntryModifier = Modifier.onPreviewKeyEvent { event ->
         if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionRight) {
-            if (event.nativeKeyEvent.repeatCount == 0) focusPreferredEpisode()
+            focusPreferredEpisode()
             true
         } else false
     }
