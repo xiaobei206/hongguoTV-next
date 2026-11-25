@@ -42,13 +42,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -76,6 +74,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -444,8 +443,28 @@ private fun BrowseScreen(
             Modifier.width(190.dp).fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-            Text("红果 TV", fontSize = 29.sp, fontWeight = FontWeight.Bold, color = TvAccent)
-            Text("NEXT · v${BuildConfig.VERSION_NAME}", fontSize = 12.sp, color = TvMuted)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.tv_icon_launcher),
+                    contentDescription = "红果 TV",
+                    modifier = Modifier.size(52.dp),
+                    contentScale = ContentScale.Fit
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text("红果", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = TvText)
+                        Text("TV", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = TvAccent)
+                    }
+                    Text("影视 · 发现 · 畅快观看", fontSize = 10.sp, color = TvMuted, maxLines = 1)
+                    Text("NEXT · v${BuildConfig.VERSION_NAME}", fontSize = 10.sp, color = TvMuted)
+                }
+            }
             Spacer(Modifier.height(10.dp))
             tabs.forEach { item ->
                 NavigationItem(
@@ -576,12 +595,8 @@ private fun BrowseScreen(
                         })
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Button(onClick = { submittedQuery = searchText.trim() }, enabled = searchText.isNotBlank()) {
-                            Text("搜索")
-                        }
-                        TextButton(onClick = { searchText = ""; submittedQuery = "" }) {
-                            Text("清除")
-                        }
+                        TvActionButton("搜索", onClick = { submittedQuery = searchText.trim() }, enabled = searchText.isNotBlank(), prominent = true)
+                        TvActionButton("清除", onClick = { searchText = ""; submittedQuery = "" })
                     }
                     if (submittedQuery.isBlank() && hotCards.isEmpty()) {
                         Text(
@@ -694,9 +709,9 @@ private fun BrowseScreen(
                             fontSize = 21.sp
                         )
                         if (feed?.error != null) {
-                            Button(onClick = { feed.retry() }) { Text("重试") }
+                            TvActionButton("重试", onClick = { feed.retry() }, prominent = true)
                         } else if (selectedTab == TvTab.SEARCH && submittedQuery.isBlank() && model.hotError != null) {
-                            Button(onClick = { model.loadHot(force = true) }) { Text("重新加载热搜") }
+                            TvActionButton("重新加载热搜", onClick = { model.loadHot(force = true) }, prominent = true)
                         }
                     }
                 } else {
@@ -771,7 +786,7 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
         modifier = Modifier.fillMaxWidth().height(46.dp)
             .onFocusChanged { focused = it.isFocused }
             .graphicsLayer {
-                val emphasis = if (focused) 1.025f else 1f
+                val emphasis = if (focused) 1.035f else 1f
                 scaleX = emphasis
                 scaleY = emphasis
             }
@@ -779,18 +794,19 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
             .focusable(),
         color = when {
             focused -> TvFocus
-            selected -> TvAccent
+            selected -> TvPanelRaised
             else -> TvPanel
         },
         shape = RoundedCornerShape(10.dp),
-        border = if (focused) BorderStroke(4.dp, Color.White) else null
+        border = if (!focused && selected) BorderStroke(1.dp, TvAccent) else null,
+        shadowElevation = if (focused) 5.dp else 0.dp
     ) {
         Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
             Text(
                 title,
-                color = if (selected || focused) Color.Black else TvText,
+                color = if (focused) Color(0xFF18212B) else TvText,
                 fontSize = 17.sp,
-                fontWeight = if (selected || focused) FontWeight.ExtraBold else FontWeight.Medium
+                fontWeight = if (focused || selected) FontWeight.Bold else FontWeight.Medium
             )
         }
     }
@@ -811,21 +827,76 @@ private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
         modifier = Modifier.height(40.dp)
             .onFocusChanged { focused = it.isFocused }
             .graphicsLayer {
-                val emphasis = if (focused) 1.04f else 1f
+                val emphasis = if (focused) 1.035f else 1f
                 scaleX = emphasis
                 scaleY = emphasis
             }
             .clickable(onClick = onClick).focusable(),
         shape = RoundedCornerShape(20.dp),
-        color = if (focused) TvFocus else if (selected) TvAccent else TvPanel,
-        border = if (focused) BorderStroke(4.dp, Color.White) else null
+        color = when {
+            focused -> TvFocus
+            selected -> TvPanelRaised
+            else -> TvPanel
+        },
+        border = if (!focused && selected) BorderStroke(1.dp, TvAccent) else null,
+        shadowElevation = if (focused) 4.dp else 0.dp
     ) {
         Box(Modifier.padding(horizontal = 15.dp), contentAlignment = Alignment.Center) {
             Text(
                 label,
-                color = if (selected || focused) Color.Black else TvText,
+                color = if (focused) Color(0xFF18212B) else TvText,
                 fontSize = 15.sp,
-                fontWeight = if (focused) FontWeight.ExtraBold else FontWeight.Medium
+                fontWeight = if (focused || selected) FontWeight.Bold else FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun TvActionButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    prominent: Boolean = false
+) {
+    var focused by remember { mutableStateOf(false) }
+    Surface(
+        modifier = modifier.height(44.dp).widthIn(min = 88.dp)
+            .onFocusChanged { focused = it.isFocused }
+            .graphicsLayer {
+                val emphasis = if (focused) 1.035f else 1f
+                scaleX = emphasis
+                scaleY = emphasis
+            }
+            .clickable(enabled = enabled, onClick = onClick)
+            .focusable(enabled = enabled),
+        color = when {
+            !enabled -> Color(0xFF202831)
+            focused -> TvFocus
+            prominent -> TvPanelRaised
+            else -> TvPanel
+        },
+        shape = RoundedCornerShape(10.dp),
+        border = when {
+            focused -> BorderStroke(1.dp, Color(0xFFFFD99A))
+            prominent && enabled -> BorderStroke(1.dp, TvAccent)
+            else -> BorderStroke(1.dp, TvPanelRaised)
+        },
+        shadowElevation = if (focused) 5.dp else 0.dp
+    ) {
+        Box(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
+            Text(
+                label,
+                color = when {
+                    !enabled -> TvMuted
+                    focused -> Color(0xFF18212B)
+                    else -> TvText
+                },
+                fontSize = 15.sp,
+                fontWeight = if (focused) FontWeight.ExtraBold else FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -856,7 +927,8 @@ private fun CatalogCardView(
             .focusable(),
         color = if (focused) TvPanelRaised else TvPanel,
         shape = RoundedCornerShape(12.dp),
-        border = if (focused) BorderStroke(3.dp, TvFocusBorder) else null
+        border = if (focused) BorderStroke(2.dp, TvFocus) else null,
+        shadowElevation = if (focused) 5.dp else 0.dp
     ) {
         Column(Modifier.padding(8.dp)) {
             Box(
@@ -948,19 +1020,25 @@ private fun DetailScreen(
             Text(title, fontSize = 23.sp, fontWeight = FontWeight.Bold)
             Text("共 ${series?.episodeCount ?: page.episodes.size} 集", color = TvMuted, fontSize = 15.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
-                    val watch = model.history.get(seriesId)
-                    val episode = watch?.episode ?: 1
-                    val position = if (watch != null && !watch.finished) maxOf(0.0, watch.position - 3.0) else 0.0
-                    onPlay(seriesId, episode, position)
-                }, enabled = page.episodes.isNotEmpty()) { Text("继续播放") }
-                TextButton(onClick = {
-                    model.favorites.toggle(Fav(seriesId, title, cover, series?.episodeCount ?: page.episodes.size))
-                }) {
-                    Text(if (model.favorites.has(seriesId)) "取消收藏" else "收藏")
-                }
+                TvActionButton(
+                    "继续播放",
+                    enabled = page.episodes.isNotEmpty(),
+                    prominent = true,
+                    onClick = {
+                        val watch = model.history.get(seriesId)
+                        val episode = watch?.episode ?: 1
+                        val position = if (watch != null && !watch.finished) maxOf(0.0, watch.position - 3.0) else 0.0
+                        onPlay(seriesId, episode, position)
+                    }
+                )
+                TvActionButton(
+                    if (model.favorites.has(seriesId)) "取消收藏" else "收藏",
+                    onClick = {
+                        model.favorites.toggle(Fav(seriesId, title, cover, series?.episodeCount ?: page.episodes.size))
+                    }
+                )
             }
-            TextButton(onClick = onBack) { Text("返回列表") }
+            TvActionButton("返回列表", onClick = onBack)
         }
 
         Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -990,15 +1068,12 @@ private fun DetailScreen(
                                 .focusable(enabled = season.episodeCount > 0),
                             shape = RoundedCornerShape(10.dp),
                             color = when {
-                                selected -> TvAccent
-                                focused -> TvPanelRaised
+                                focused -> TvFocus
+                                selected -> TvPanelRaised
                                 else -> TvPanel
                             },
-                            border = when {
-                                focused -> BorderStroke(3.dp, TvFocusBorder)
-                                selected -> BorderStroke(1.dp, TvAccent)
-                                else -> null
-                            }
+                            border = if (!focused && selected) BorderStroke(1.dp, TvAccent) else null,
+                            shadowElevation = if (focused) 5.dp else 0.dp
                         ) {
                             Column(
                                 Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 7.dp),
@@ -1008,19 +1083,19 @@ private fun DetailScreen(
                                     seasonLabel(season),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (selected) TvBackground else TvText
+                                    color = if (focused) Color(0xFF18212B) else TvText
                                 )
                                 Text(
                                     season.title,
                                     fontSize = 11.sp,
-                                    color = if (selected) Color(0xFF352515) else TvMuted,
+                                    color = if (focused) Color(0xFF26313B) else TvMuted,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     if (season.episodeCount > 0) "${season.episodeCount} 集" else "暂未更新",
                                     fontSize = 11.sp,
-                                    color = if (selected) Color(0xFF352515) else TvMuted
+                                    color = if (focused) Color(0xFF26313B) else TvMuted
                                 )
                             }
                         }
@@ -1053,17 +1128,18 @@ private fun DetailScreen(
                             shape = RoundedCornerShape(10.dp),
                             color = when {
                                 focused -> TvFocus
-                                focusedEpisode == episode.number -> TvAccent
+                                focusedEpisode == episode.number -> TvPanelRaised
                                 else -> TvPanel
                             },
-                            border = if (focused) BorderStroke(3.dp, TvFocusBorder) else null
+                            border = if (!focused && focusedEpisode == episode.number) BorderStroke(1.dp, TvAccent) else null,
+                            shadowElevation = if (focused) 5.dp else 0.dp
                         ) {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Text(
                                     episode.number.toString(),
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (focused || focusedEpisode == episode.number) TvBackground else TvText
+                                    color = if (focused) Color(0xFF18212B) else TvText
                                 )
                             }
                         }
@@ -1092,7 +1168,7 @@ private fun PlayerScreen(model: AppModel, exo: androidx.media3.exoplayer.ExoPlay
                 )
                 Text("第 ${player.number} 集 · ${playerStateLabel(player.state)}", color = TvMuted, fontSize = 14.sp)
             }
-            TextButton(onClick = onBack) { Text("返回", color = TvText) }
+            TvActionButton("返回", onClick = onBack)
         }
         AndroidView(
             factory = { context ->
@@ -1113,11 +1189,9 @@ private fun PlayerScreen(model: AppModel, exo: androidx.media3.exoplayer.ExoPlay
             ) {
                 Text("播放失败：${failed.message}", color = TvText, fontSize = 16.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(onClick = { player.retry() }) { Text("重新尝试") }
+                    TvActionButton("重新尝试", onClick = { player.retry() }, prominent = true)
                     if (failed.diagnostic?.canRefreshDevice == true) {
-                        TextButton(onClick = { player.retryWithFreshDevice() }) {
-                            Text("更换匿名设备重试", color = TvAccent)
-                        }
+                        TvActionButton("更换匿名设备重试", onClick = { player.retryWithFreshDevice() })
                     }
                 }
             }
@@ -1127,26 +1201,29 @@ private fun PlayerScreen(model: AppModel, exo: androidx.media3.exoplayer.ExoPlay
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(onClick = { player.togglePause() }) {
-                Text(if (player.video.wantsToPlay && player.video.status != com.xiaobei206.hongguotvnext.model.TimeControl.PAUSED) "暂停" else "播放")
-            }
-            TextButton(onClick = { player.skip(-10.0) }) { Text("后退 10 秒", color = TvText) }
-            TextButton(onClick = { player.skip(10.0) }) { Text("前进 10 秒", color = TvText) }
-            TextButton(onClick = { player.step(-1) }) { Text("上一集", color = TvText) }
-            TextButton(onClick = { player.step(1) }) { Text("下一集", color = TvText) }
-            TextButton(onClick = {
+            TvActionButton(
+                if (player.video.wantsToPlay && player.video.status != com.xiaobei206.hongguotvnext.model.TimeControl.PAUSED) "暂停" else "播放",
+                prominent = true,
+                onClick = { player.togglePause() }
+            )
+            TvActionButton("后退 10 秒", onClick = { player.skip(-10.0) })
+            TvActionButton("前进 10 秒", onClick = { player.skip(10.0) })
+            TvActionButton("上一集", onClick = { player.step(-1) })
+            TvActionButton("下一集", onClick = { player.step(1) })
+            TvActionButton("${player.speed}×", onClick = {
                 speedIndex = (speedIndex + 1) % Player.speeds.size
                 player.chooseSpeed(Player.speeds[speedIndex])
-            }) { Text("${player.speed}×", color = TvAccent) }
-            TextButton(onClick = {
-                val qualities = player.qualities
-                if (qualities.isNotEmpty()) {
-                    val current = qualities.indexOf(player.quality).coerceAtLeast(-1)
-                    player.chooseQuality(qualities[(current + 1) % qualities.size])
+            })
+            TvActionButton(
+                if (player.quality > 0) "${player.quality}P" else "清晰度",
+                onClick = {
+                    val qualities = player.qualities
+                    if (qualities.isNotEmpty()) {
+                        val current = qualities.indexOf(player.quality).coerceAtLeast(-1)
+                        player.chooseQuality(qualities[(current + 1) % qualities.size])
+                    }
                 }
-            }) {
-                Text(if (player.quality > 0) "${player.quality}P" else "清晰度", color = TvAccent)
-            }
+            )
         }
         Text("位置 ${formatPosition(player.video.position)} / ${formatPosition(player.video.duration)}", color = TvMuted, fontSize = 13.sp)
     }
@@ -1172,7 +1249,8 @@ private fun HandoffToggleRow(
         modifier = Modifier.fillMaxWidth(),
         color = if (focused) TvFocus else TvPanel,
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(if (focused) 4.dp else 1.dp, if (focused) TvFocusBorder else TvPanelRaised)
+        border = BorderStroke(1.dp, if (focused) TvAccent else TvPanelRaised),
+        shadowElevation = if (focused) 4.dp else 0.dp
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp),
@@ -1186,12 +1264,12 @@ private fun HandoffToggleRow(
                     "设备接力（手机投屏）",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = if (focused) Color.Black else TvText
+                    color = if (focused) Color(0xFF18212B) else TvText
                 )
                 Text(
                     if (enabled) "已开启：应用在前台时，手机可以发现电视并发送播放任务。"
                     else "已关闭：停止广播接力服务，也不接收接力任务。",
-                    color = if (focused) Color(0xFF352515) else TvMuted,
+                    color = if (focused) Color(0xFF26313B) else TvMuted,
                     fontSize = 14.sp
                 )
             }
@@ -1226,16 +1304,21 @@ private fun DeviceScreen(
             OutlinedTextField(
                 value = name, onValueChange = { name = it }, label = { Text("电视显示名称") }, singleLine = true
             )
-            Button(onClick = {
-                val ok = server?.setDisplayName(name) == true
-                Toast.makeText(
-                    context,
-                    if (ok) "名称已保存" else "无法保存名称",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }, enabled = server != null) { Text("保存名称") }
+            TvActionButton(
+                "保存名称",
+                enabled = server != null,
+                prominent = true,
+                onClick = {
+                    val ok = server?.setDisplayName(name) == true
+                    Toast.makeText(
+                        context,
+                        if (ok) "名称已保存" else "无法保存名称",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
         }
-        TextButton(onClick = onBack) { Text("返回") }
+        TvActionButton("返回", onClick = onBack)
         Text("启用状态会保存；默认开启。为避免后台占用，只有应用在前台时才广播发现。", color = TvMuted, fontSize = 15.sp)
     }
 }
@@ -1273,12 +1356,12 @@ private fun DiagnosticsScreen(
         }
         Text(transferState, color = TvMuted)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = {
+            TvActionButton("复制诊断", prominent = true, onClick = {
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 clipboard.setPrimaryClip(ClipData.newPlainText("hongguoTV-next-diagnostics", report))
                 Toast.makeText(context, "诊断信息已复制", Toast.LENGTH_SHORT).show()
-            }) { Text("复制诊断") }
-            Button(onClick = {
+            })
+            TvActionButton("发送到开心果手机", onClick = {
                 scope.launch {
                     transferState = "正在搜索开心果手机并发送…"
                     val result = runCatching { PhoneDiagnosticClient.sendToAll(context, report) }
@@ -1287,8 +1370,8 @@ private fun DiagnosticsScreen(
                         { "发送失败：${it.message ?: it.javaClass.simpleName}" }
                     )
                 }
-            }) { Text("发送到开心果手机") }
-            TextButton(onClick = onBack) { Text("返回") }
+            })
+            TvActionButton("返回", onClick = onBack)
         }
     }
 }
@@ -1379,8 +1462,8 @@ private fun SettingsActionRow(
             .focusable(),
         color = if (focused) focusedColor else TvPanel,
         shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(if (focused) 5.dp else 2.dp, if (focused) TvFocusBorder else TvPanelRaised),
-        shadowElevation = if (focused) 8.dp else 0.dp
+        border = BorderStroke(1.dp, if (focused) TvAccent else TvPanelRaised),
+        shadowElevation = if (focused) 5.dp else 0.dp
     ) {
         Row(
             Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 10.dp),
@@ -1392,19 +1475,19 @@ private fun SettingsActionRow(
             ) {
                 Text(
                     title,
-                    color = if (focused) Color.Black else TvText,
+                    color = if (focused) Color(0xFF18212B) else TvText,
                     fontSize = 21.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
                 Text(
                     description,
-                    color = if (focused) Color(0xFF352515) else TvMuted,
+                    color = if (focused) Color(0xFF26313B) else TvMuted,
                     fontSize = 15.sp
                 )
             }
             Text(
                 "›",
-                color = if (focused) Color.Black else TvAccent,
+                color = if (focused) Color(0xFF18212B) else TvAccent,
                 fontSize = 34.sp,
                 fontWeight = FontWeight.ExtraBold
             )

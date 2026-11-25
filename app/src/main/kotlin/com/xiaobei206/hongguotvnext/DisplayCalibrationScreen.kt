@@ -42,7 +42,6 @@ private val CalibrationVideoOutside = Color(0xFFF50057)
 private val CalibrationVideoInside = Color(0xFF00D8A0)
 private val CalibrationFocus = Color(0xFFF0B65A)
 private val CalibrationMarker = Color(0xFFFF2D00)
-private val CalibrationFocusBorder = Color(0xFFFFF3DD)
 private val CalibrationInk = Color(0xFF101820)
 
 @Composable
@@ -261,8 +260,8 @@ private fun CalibrationActionButton(
         },
         shape = RoundedCornerShape(9.dp),
         border = androidx.compose.foundation.BorderStroke(
-            width = if (focused) 5.dp else 2.dp,
-            color = if (focused) CalibrationFocusBorder else CalibrationInk,
+            width = 1.dp,
+            color = if (focused) CalibrationFocus else CalibrationInk,
         ),
     ) {
         Box(Modifier.fillMaxSize().padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
