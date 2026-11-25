@@ -94,6 +94,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
 
     var menuVisible by remember { mutableStateOf(true) }
     var controlsFocused by remember { mutableStateOf(false) }
+    var preserveInitialPauseFocusTimeout by remember { mutableStateOf(false) }
     var episodeKeyHeld by remember { mutableStateOf(false) }
     var hideDelayMs by remember { mutableLongStateOf(650L) }
     var timerKey by remember { mutableLongStateOf(0L) }
@@ -165,6 +166,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
         delay(hideDelayMs)
         menuVisible = false
         controlsFocused = false
+        preserveInitialPauseFocusTimeout = false
         runCatching { rootFocus.requestFocus() }
     }
 
@@ -262,7 +264,8 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                     }
                     Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
                         if (!menuVisible) {
-                            showMenu(3_000L)
+                            preserveInitialPauseFocusTimeout = true
+                            showMenu(3_000L, focusControls = true)
                             true
                         } else if (!controlsFocused) {
                             player.togglePause()
@@ -430,7 +433,13 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                             label = if (player.video.wantsToPlay && player.video.status != TimeControl.PAUSED) "暂停" else "播放",
                             modifier = Modifier.focusRequester(pauseFocus),
                             primary = true,
-                            onFocused = { renewControlsTimeout() },
+                            onFocused = {
+                                if (preserveInitialPauseFocusTimeout) {
+                                    preserveInitialPauseFocusTimeout = false
+                                } else {
+                                    renewControlsTimeout()
+                                }
+                            },
                             onClick = { player.togglePause(); renewControlsTimeout() }
                         )
                         PlayerControlButton(

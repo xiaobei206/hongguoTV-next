@@ -56,6 +56,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -71,6 +72,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.nativeKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -1000,6 +1007,43 @@ private fun DetailScreen(
         if (cover.isNotBlank()) value = runCatching { covers.image(cover) }.getOrNull()
     }
     var focusedEpisode by rememberSaveable(seriesId) { mutableIntStateOf(-1) }
+    val continueFocusRequester = remember(seriesId) { FocusRequester() }
+    val episodeGridState = rememberLazyGridState()
+    val episodeFocusRequesters = remember(seriesId) { mutableStateMapOf<Int, FocusRequester>() }
+    val detailScope = rememberCoroutineScope()
+
+    fun focusPreferredEpisode() {
+        val episodes = page.episodes
+        if (episodes.isEmpty()) return
+        val savedEpisode = model.history.get(seriesId)?.episode
+        val targetEpisode = savedEpisode?.takeIf { target -> episodes.any { it.number == target } }
+            ?: episodes.firstOrNull()?.number
+            ?: return
+        val targetIndex = episodes.indexOfFirst { it.number == targetEpisode }.coerceAtLeast(0)
+        focusedEpisode = targetEpisode
+        detailScope.launch {
+            episodeGridState.scrollToItem(targetIndex)
+            val targetRequester = withTimeoutOrNull(1_500L) {
+                snapshotFlow { episodeFocusRequesters[targetEpisode] }.first { it != null }
+            }
+            targetRequester?.let { requester -> runCatching { requester.requestFocus() } }
+        }
+    }
+
+    // Keep the adjacent 收藏 button reachable. Right from that action row enters the episode area
+    // at the remembered episode, or episode 1 when no usable history exists for this season.
+    val episodeEntryModifier = Modifier.onPreviewKeyEvent { event ->
+        if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionRight) {
+            if (event.nativeKeyEvent.repeatCount == 0) focusPreferredEpisode()
+            true
+        } else false
+    }
+
+    LaunchedEffect(seriesId, page.episodes.isNotEmpty()) {
+        if (page.episodes.isEmpty()) return@LaunchedEffect
+        withFrameNanos { }
+        runCatching { continueFocusRequester.requestFocus() }
+    }
 
     Row(
         Modifier.fillMaxSize().background(TvBackground).padding(28.dp),
@@ -1025,6 +1069,7 @@ private fun DetailScreen(
                     "继续播放",
                     enabled = page.episodes.isNotEmpty(),
                     prominent = true,
+                    modifier = Modifier.focusRequester(continueFocusRequester),
                     onClick = {
                         val watch = model.history.get(seriesId)
                         val episode = watch?.episode ?: 1
@@ -1034,12 +1079,13 @@ private fun DetailScreen(
                 )
                 TvActionButton(
                     if (model.favorites.has(seriesId)) "取消收藏" else "收藏",
+                    modifier = episodeEntryModifier,
                     onClick = {
                         model.favorites.toggle(Fav(seriesId, title, cover, series?.episodeCount ?: page.episodes.size))
                     }
                 )
             }
-            TvActionButton("返回列表", onClick = onBack)
+            TvActionButton("返回列表", modifier = episodeEntryModifier, onClick = onBack)
         }
 
         Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1061,7 +1107,7 @@ private fun DetailScreen(
                         val selected = season.seriesId == seriesId
                         var focused by remember(season.seriesId) { mutableStateOf(false) }
                         Surface(
-                            modifier = Modifier.width(178.dp).height(70.dp)
+                            modifier = Modifier.width(220.dp).height(72.dp)
                                 .onFocusChanged { focused = it.isFocused }
                                 .clickable(enabled = season.episodeCount > 0) {
                                     if (!selected) onSelectSeason(season.seriesId)
@@ -1077,26 +1123,38 @@ private fun DetailScreen(
                             shadowElevation = if (focused) 5.dp else 0.dp
                         ) {
                             Column(
-                                Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 7.dp),
-                                verticalArrangement = Arrangement.Center
+                                Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
                             ) {
-                                Text(
-                                    seasonLabel(season),
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (focused) Color(0xFF18212B) else TvText
-                                )
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        seasonLabel(season),
+                                        modifier = Modifier.weight(1f).padding(end = 6.dp),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (focused) Color(0xFF18212B) else TvText,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        if (season.episodeCount > 0) "共${season.episodeCount}集" else "未更新",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (focused) Color(0xFF26313B) else TvMuted,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
                                 Text(
                                     season.title,
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     color = if (focused) Color(0xFF26313B) else TvMuted,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    if (season.episodeCount > 0) "${season.episodeCount} 集" else "暂未更新",
-                                    fontSize = 11.sp,
-                                    color = if (focused) Color(0xFF26313B) else TvMuted
                                 )
                             }
                         }
@@ -1111,6 +1169,7 @@ private fun DetailScreen(
                 page.error != null && page.episodes.isEmpty() -> Text("加载失败：${page.error?.message ?: "未知错误"}", color = TvMuted)
                 page.episodes.isEmpty() -> Text("暂无可用选集", color = TvMuted)
                 else -> LazyVerticalGrid(
+                    state = episodeGridState,
                     columns = GridCells.Adaptive(minSize = 88.dp),
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 24.dp),
@@ -1119,8 +1178,18 @@ private fun DetailScreen(
                 ) {
                     items(page.episodes, key = { it.id }) { episode ->
                         var focused by remember { mutableStateOf(false) }
+                        val episodeFocusRequester = remember(seriesId, episode.id) { FocusRequester() }
+                        DisposableEffect(seriesId, episode.number, episodeFocusRequester) {
+                            episodeFocusRequesters[episode.number] = episodeFocusRequester
+                            onDispose {
+                                if (episodeFocusRequesters[episode.number] === episodeFocusRequester) {
+                                    episodeFocusRequesters.remove(episode.number)
+                                }
+                            }
+                        }
                         Surface(
-                            modifier = Modifier.height(58.dp).onFocusChanged { focused = it.isFocused }
+                            modifier = Modifier.height(58.dp).focusRequester(episodeFocusRequester)
+                                .onFocusChanged { focused = it.isFocused }
                                 .clickable {
                                     focusedEpisode = episode.number
                                     if (episode.playable) onPlay(seriesId, episode.number, 0.0)

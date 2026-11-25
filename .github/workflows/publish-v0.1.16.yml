@@ -1,0 +1,145 @@
+name: Publish v0.1.16 formal release
+
+on:
+  workflow_run:
+    workflows: ["Android CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact Android CI source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check whether this commit is the final release marker
+        id: release-marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log -1 --format=%B | grep -Fq 'release: prepare v0.1.16 final'; then
+            echo "matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches=false" >> "$GITHUB_OUTPUT"
+            echo "This successful CI run is not the final v0.1.16 release candidate."
+          fi
+
+      - name: Ensure this is still the latest main commit
+        id: current-head
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          if [[ "$current" == "$TARGET_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale release candidate $TARGET_SHA; main is now $current."
+          fi
+
+      - name: Download signed APK from the successful CI run
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.16-formal-release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.16-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.16-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.16-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.16-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.16-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.16
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: 红果 TV Next v0.1.16
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 红果 TV Next v0.1.16
+
+            ### 长辈友好遥控焦点与续播选集定位
+            - 播放器隐藏菜单时按确认键只召出菜单，初始焦点直接落在第一个播放/暂停按钮；这次不改变原有 3 秒召出超时，也不改变切集 500ms、快退/快进 3 秒、操作控制栏 5 秒的既有计时策略。
+            - 详情页剧集加载完成后，初始焦点定位在左侧“继续播放”。
+            - 从左侧操作区向右进入选集时，若有观看历史则滚动并聚焦到历史续播集（例如第 45 集）；没有历史或历史集不在当前季时回到第 1 集。
+            - 同系列季卡加宽到 220dp，将季标题与总集数放在同一行，季名/副标题单独一行；总集数不再挤在最下面而被裁掉。
+            - 图标、首页 LOGO 与 TV banner 本版保持 v0.1.15 素材不变；本版不改播放状态机、快退/快进逻辑、菜单隐藏计时或图像资源。
+
+            ### 影院石墨主题与长辈友好遥控器
+            - 全局配色统一为深石墨、墨蓝灰、抬升面板、古铜金和琥珀金；文字使用暖白和雾灰，视频画面继续保持纯黑。
+            - 播放菜单打开后自动聚焦“播放/暂停”；按 OK 打开菜单不再顺带暂停视频。
+            - 菜单已聚焦时，左右键直接在播放、快退、快进、上一集、下一集、倍速、清晰度和退出播放之间移动。
+            - 当前焦点使用琥珀金填充和深石墨文字；失焦后恢复深色底、浅色文字，不再残留金色填充或叠加白色粗框。
+            - 播放器恢复上一版分场景自动隐藏：切集 500 毫秒、普通召出与快退/快进 3 秒、进入或操作控制栏 5 秒；方向键可在同一焦点组内浏览诊断和播放控制按钮。
+            - 首页导航、筛选、详情选季、选集、设置、设备接力和画面校准统一使用新焦点色。
+
+            ### 兼容性与构建校验
+            - 保留一个 Universal APK，最低系统版本 Android 6.0（API 23）。
+            - 保留项目固定版本的自维护 openhongguo SDK、Media3 播放链路、CENC 兼容和三种 ABI（x86_64、arm64-v8a、armeabi-v7a）。
+            - Android CI 检查 SDK 测试、应用单元测试、Android Lint、APK 最低 SDK、三种 ABI、正式签名与 SHA-256。
+            - 正式证书 SHA-256：ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34
+
+            ### 实机验收说明
+            - CI 通过代表源码、测试、构建、签名和包结构检查通过；电视遥控器实际焦点移动、不同屏幕字体可读性及视频播放仍以目标电视实测为准。
+
+            ### 老电视画面校准（按遥控器重新设计）
+            - 设置主页采用分层菜单：设备接力保留直接开关；“界面尺寸与边界”和“视频画面尺寸与边界”各自进入独立全屏校准页；另有恢复所有画面设置默认。
+            - 界面校准使用黄/蓝全屏高对比测试图，视频校准使用品红/绿测试图；均显示粗黑白双边框、红色角标、九宫格和中心参考，方便辨认各边界。
+            - 遥控器焦点使用琥珀金底色、深色文字和轻微放大，不再依赖深浅接近的颜色。
+            - 先等比例缩放（70%–100%，每步 5 个百分点），再按 0.5% 屏幕尺寸为步进，独立向外扩展上、下、左、右边缘。每次只改变指定的一条边，不再平移整个矩形。
+            - 界面和视频参数分别即时保存；可恢复单项或全部默认。升级会沿用此前保存的 95% 等比例缩放值。
+            - 视频在默认 100% 时保留 PlayerView 原始适配；独立扩边后允许非等比例拉伸，这正是边缘校准需要的行为。
+
+            ### Android 6.0 统一兼容
+            - 一个 Universal APK，最低系统版本为 Android 6.0（API 23），不拆分独立 Legacy / Standard 代码库。
+            - Core Library Desugaring 为睡眠定时器、历史记录与诊断中的 java.time 提供旧系统兼容。
+            - Android 9+ 保留 ImageDecoder；Android 6.0-8.1 使用 BitmapFactory 的有界解码回退，并优先请求 JPEG/PNG/WebP 封面。
+            - 历史/收藏/session JSON 先写同目录临时文件并 fsync，再通过 File.renameTo 原子替换；电视设备发现集合使用 API 23 可用的同步集合。
+            - 保留 Media3 1.11.1、自维护 openhongguo AAR、CENC 播放与三种 ABI，不为降低最低系统版本替换播放器。
+
+            ### 构建与校验
+            - Android CI 必须通过 SDK Go 测试、应用单元测试、Android Lint、APK Manifest 最低 SDK API 23 检查、三种 ABI 检查、正式签名验证和 SHA-256 校验。
+            - Universal APK 包含 x86_64、arm64-v8a、armeabi-v7a。
+            - 正式证书 SHA-256：ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34
+
+            ### 封面修复
+            - 恢复旧 TV 已验证的 byteimg/fqnovelpic JPEG CDN 回退，原始签名 URL 保留为后备；增加 User-Agent、重定向与候选逐个解码，封面失败摘要可从诊断页复制。
+
+              ### 播放诊断图形
+            - Stats for nerds 网络活动图采用固定 20 秒时间轴、40 个 500ms 采样槽、固定参考刻度、分档颜色和动态扫描指示线。
+
+            ### SDK 播放兼容
+            - 修复 VLC 管道播放结束时 FFmpeg 完成信号发布竞态；增加有界等待，并将 VLC 管道回归用例连续执行 25 次。
+
+            ### 实机说明
+            API 23 只保证系统安装门槛；DRM/Widevine、安全级别、视频编码器、芯片硬解和遥控器焦点仍需在小米 E55A、东芝 75U6900C 等实机验收。CI 通过不等于所有视频格式均能在旧电视上硬解。
+          files: |
+            dist/hongguoTV-next-v0.1.16-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.16-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.16-release-certificate.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
