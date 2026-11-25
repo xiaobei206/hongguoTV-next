@@ -3,7 +3,9 @@ package com.xiaobei206.hongguotvnext
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
@@ -71,10 +73,13 @@ import com.xiaobei206.hongguotvnext.playback.PlaybackDiagnostics
 import kotlinx.coroutines.delay
 import java.util.Locale
 
-private val PlayerHudGreen = Color(0xFF9DFFB0)
-private val PlayerHudPanel = Color(0xE610141B)
-private val PlayerHudText = Color(0xFFF5F7FA)
-private val PlayerHudMuted = Color(0xFFB7C0CC)
+private val PlayerHudAccent = Color(0xFFF0B65A)
+private val PlayerHudFocusBorder = Color(0xFFFFF3DD)
+private val PlayerHudPanel = Color(0xE60D131A)
+private val PlayerHudControl = Color(0xFF202B36)
+private val PlayerHudControlBorder = Color(0xFF485563)
+private val PlayerHudText = Color(0xFFF4F1E9)
+private val PlayerHudMuted = Color(0xFFA7B0BA)
 
 /**
  * TV-first player controls:
@@ -91,9 +96,9 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
     val pauseFocus = remember { FocusRequester() }
 
     var menuVisible by remember { mutableStateOf(true) }
-    var controlsFocused by remember { mutableStateOf(false) }
+    var controlsFocused by remember { mutableStateOf(true) }
     var episodeKeyHeld by remember { mutableStateOf(false) }
-    var hideDelayMs by remember { mutableLongStateOf(650L) }
+    var hideDelayMs by remember { mutableLongStateOf(12_000L) }
     var timerKey by remember { mutableLongStateOf(0L) }
     var backArmedUntil by remember { mutableLongStateOf(0L) }
     var hint by remember { mutableStateOf<String?>(null) }
@@ -103,22 +108,17 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
     var positionTick by remember { mutableLongStateOf(0L) }
     val positionTickForUi = positionTick
 
-    fun showMenu(timeoutMs: Long, focusControls: Boolean = false) {
+    fun showMenu(timeoutMs: Long, focusControls: Boolean = true) {
         menuVisible = true
         hideDelayMs = timeoutMs
         controlsFocused = focusControls
         timerKey++
-        if (focusControls) {
-            runCatching { pauseFocus.requestFocus() }
-        } else {
-            runCatching { rootFocus.requestFocus() }
-        }
     }
 
     fun renewControlsTimeout() {
         menuVisible = true
         controlsFocused = true
-        hideDelayMs = 5_000L
+        hideDelayMs = 12_000L
         timerKey++
     }
 
@@ -147,16 +147,23 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
         handleBack()
     }
 
-    LaunchedEffect(Unit) {
-        runCatching { rootFocus.requestFocus() }
+    // Focus the first menu action only after the menu has entered composition.
+    LaunchedEffect(menuVisible, controlsFocused) {
+        if (!menuVisible) return@LaunchedEffect
+        withFrameMillis { }
+        if (controlsFocused) {
+            runCatching { pauseFocus.requestFocus() }
+        } else {
+            runCatching { rootFocus.requestFocus() }
+        }
     }
 
-    // A manual or automatic episode change briefly shows the episode/menu HUD.
+    // A manual or automatic episode change opens the menu on a predictable control.
     LaunchedEffect(player.number) {
-        showMenu(500L)
+        showMenu(12_000L, focusControls = true)
     }
 
-    LaunchedEffect(menuVisible, controlsFocused, timerKey) {
+    LaunchedEffect(menuVisible, timerKey) {
         if (!menuVisible) return@LaunchedEffect
         delay(hideDelayMs)
         menuVisible = false
@@ -225,10 +232,11 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                         else {
                             episodeKeyHeld = true
                             if (menuVisible && !controlsFocused) {
-                                showMenu(5_000L, focusControls = true)
+                                showMenu(12_000L, focusControls = true)
                                 true
                             } else if (menuVisible && controlsFocused) {
-                                false
+                                renewControlsTimeout()
+                                true
                             } else if (player.hasPrevious) {
                                 player.step(-1)
                                 true
@@ -243,10 +251,11 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                         else {
                             episodeKeyHeld = true
                             if (menuVisible && !controlsFocused) {
-                                showMenu(5_000L, focusControls = true)
+                                showMenu(12_000L, focusControls = true)
                                 true
                             } else if (menuVisible && controlsFocused) {
-                                false
+                                renewControlsTimeout()
+                                true
                             } else if (player.hasNext) {
                                 player.step(1)
                                 true
@@ -257,12 +266,8 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                         }
                     }
                     Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
-                        if (!menuVisible) {
-                            showMenu(3_000L)
-                            true
-                        } else if (!controlsFocused) {
-                            player.togglePause()
-                            showMenu(5_000L, focusControls = true)
+                        if (!menuVisible || !controlsFocused) {
+                            showMenu(12_000L, focusControls = true)
                             true
                         } else {
                             false
@@ -369,7 +374,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                         Button(onClick = { player.retry(); renewControlsTimeout() }) { Text("重新尝试") }
                         if (failure.diagnostic?.canRefreshDevice == true) {
                             TextButton(onClick = { player.retryWithFreshDevice(); renewControlsTimeout() }) {
-                                Text("刷新匿名设备并重试", color = PlayerHudGreen)
+                                Text("刷新匿名设备并重试", color = PlayerHudAccent)
                             }
                         }
                     }
@@ -413,74 +418,127 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                             if (diagnosticsVisible) diagnosticSnapshot = PlaybackDiagnostics.snapshot()
                             renewControlsTimeout()
                         }) {
-                            Text(if (diagnosticsVisible) "关闭诊断" else "播放诊断", color = PlayerHudGreen)
+                            Text(if (diagnosticsVisible) "关闭诊断" else "播放诊断", color = PlayerHudAccent)
                         }
                     }
 
                     Row(
                         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Button(
-                            modifier = Modifier.onFocusChanged {
-                                if (it.isFocused) {
-                                    controlsFocused = true
-                                    hideDelayMs = 5_000L
-                                    timerKey++
-                                }
-                            }.focusRequester(pauseFocus),
-                            onClick = {
-                                player.togglePause()
-                                renewControlsTimeout()
-                            }
-                        ) {
-                            Text(if (player.video.wantsToPlay && player.video.status != TimeControl.PAUSED) "暂停" else "播放")
-                        }
-                        TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
+                        PlayerControlButton(
+                            label = if (player.video.wantsToPlay && player.video.status != TimeControl.PAUSED) "暂停" else "播放",
+                            modifier = Modifier.focusRequester(pauseFocus),
+                            primary = true,
+                            onFocused = { renewControlsTimeout() },
+                            onClick = { player.togglePause(); renewControlsTimeout() }
+                        )
+                        PlayerControlButton(
+                            label = "后退 10 秒",
+                            onFocused = { renewControlsTimeout() },
                             onClick = { player.skip(-10.0); showSeekHint("−10s"); renewControlsTimeout() }
-                        ) { Text("后退 10 秒", color = PlayerHudText) }
-                        TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
+                        )
+                        PlayerControlButton(
+                            label = "快进 10 秒",
+                            onFocused = { renewControlsTimeout() },
                             onClick = { player.skip(10.0); showSeekHint("+10s"); renewControlsTimeout() }
-                        ) { Text("快进 10 秒", color = PlayerHudText) }
-                        TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
-                            onClick = { player.step(-1); showMenu(500L) }
-                        ) { Text("上一集", color = PlayerHudText) }
-                        TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
-                            onClick = { player.step(1); showMenu(500L) }
-                        ) { Text("下一集", color = PlayerHudText) }
-                        TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
+                        )
+                        PlayerControlButton(
+                            label = "上一集",
+                            onFocused = { renewControlsTimeout() },
+                            onClick = { player.step(-1); renewControlsTimeout() }
+                        )
+                        PlayerControlButton(
+                            label = "下一集",
+                            onFocused = { renewControlsTimeout() },
+                            onClick = { player.step(1); renewControlsTimeout() }
+                        )
+                        PlayerControlButton(
+                            label = if (player.speed == 1f) "倍速" else "${player.speed}×",
+                            onFocused = { renewControlsTimeout() },
                             onClick = {
                                 val speeds = Player.speeds
                                 val index = speeds.indexOf(player.speed).coerceAtLeast(-1)
                                 player.chooseSpeed(speeds[(index + 1) % speeds.size])
                                 renewControlsTimeout()
                             }
-                        ) { Text(if (player.speed == 1f) "倍速" else "${player.speed}×", color = PlayerHudText) }
+                        )
                         if (player.qualities.isNotEmpty()) {
-                            TextButton(
-                                modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
+                            PlayerControlButton(
+                                label = if (player.quality > 0) "${player.quality}P" else "清晰度",
+                                onFocused = { renewControlsTimeout() },
                                 onClick = {
                                     val qualities = player.qualities
                                     val current = qualities.indexOf(player.quality).coerceAtLeast(-1)
                                     player.chooseQuality(qualities[(current + 1) % qualities.size])
                                     renewControlsTimeout()
                                 }
-                            ) { Text(if (player.quality > 0) "${player.quality}P" else "清晰度", color = PlayerHudText) }
+                            )
                         }
-                        TextButton(
-                            modifier = Modifier.onFocusChanged { if (it.isFocused) { controlsFocused = true; hideDelayMs = 5_000L; timerKey++ } },
-                            onClick = { onBack() }
-                        ) { Text("退出播放", color = PlayerHudMuted) }
+                        PlayerControlButton(
+                            label = "退出播放",
+                            onFocused = { renewControlsTimeout() },
+                            onClick = onBack
+                        )
                     }
                 }
             }
         }
+        }
+    }
+}
+
+@Composable
+private fun PlayerControlButton(
+    label: String,
+    modifier: Modifier = Modifier,
+    primary: Boolean = false,
+    onFocused: () -> Unit,
+    onClick: () -> Unit
+) {
+    var focused by remember { mutableStateOf(false) }
+    Surface(
+        modifier = modifier
+            .widthIn(min = 124.dp)
+            .height(58.dp)
+            .onFocusChanged {
+                focused = it.isFocused
+                if (it.isFocused) onFocused()
+            }
+            .graphicsLayer {
+                val emphasis = if (focused) 1.075f else 1f
+                scaleX = emphasis
+                scaleY = emphasis
+            }
+            .clickable(onClick = onClick)
+            .focusable(),
+        color = when {
+            focused -> PlayerHudAccent
+            primary -> Color(0xFF3C3024)
+            else -> PlayerHudControl
+        },
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(
+            width = if (focused) 4.dp else 1.dp,
+            color = if (focused) PlayerHudFocusBorder else PlayerHudControlBorder
+        ),
+        shadowElevation = if (focused) 12.dp else 0.dp
+    ) {
+        Box(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
+            Text(
+                label,
+                color = when {
+                    focused -> Color(0xFF171A1E)
+                    primary -> Color(0xFFF2CE9B)
+                    else -> PlayerHudText
+                },
+                fontSize = 17.sp,
+                fontWeight = if (focused || primary) FontWeight.ExtraBold else FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

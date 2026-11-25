@@ -40,7 +40,9 @@ private val CalibrationUiOutside = Color(0xFFFFD600)
 private val CalibrationUiInside = Color(0xFF0066FF)
 private val CalibrationVideoOutside = Color(0xFFF50057)
 private val CalibrationVideoInside = Color(0xFF00D8A0)
-private val CalibrationFocus = Color(0xFFFF2D00)
+private val CalibrationFocus = Color(0xFFF0B65A)
+private val CalibrationMarker = Color(0xFFFF2D00)
+private val CalibrationFocusBorder = Color(0xFFFFF3DD)
 private val CalibrationInk = Color(0xFF101820)
 
 @Composable
@@ -153,7 +155,7 @@ internal fun DisplayCalibrationScreen(
                 Offset(rect.right, rect.bottom) to Offset(rect.right - corner, rect.bottom),
                 Offset(rect.right, rect.bottom) to Offset(rect.right, rect.bottom - corner),
             ).forEach { (start, end) ->
-                drawLine(CalibrationFocus, start, end, strokeWidth = 8.dp.toPx())
+                drawLine(CalibrationMarker, start, end, strokeWidth = 8.dp.toPx())
             }
         }
 
@@ -260,7 +262,7 @@ private fun CalibrationActionButton(
         shape = RoundedCornerShape(9.dp),
         border = androidx.compose.foundation.BorderStroke(
             width = if (focused) 5.dp else 2.dp,
-            color = if (focused) Color.White else CalibrationInk,
+            color = if (focused) CalibrationFocusBorder else CalibrationInk,
         ),
     ) {
         Box(Modifier.fillMaxSize().padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
@@ -268,7 +270,7 @@ private fun CalibrationActionButton(
                 label,
                 color = when {
                     !enabled -> Color(0xFF66717D)
-                    focused -> Color.White
+                    focused -> CalibrationInk
                     else -> CalibrationInk
                 },
                 fontSize = if (focused) 17.sp else 16.sp,

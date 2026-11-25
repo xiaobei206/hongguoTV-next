@@ -105,12 +105,14 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 
-private val TvBackground = Color(0xFF0A0F17)
-private val TvPanel = Color(0xFF151E2B)
-private val TvPanelRaised = Color(0xFF202C3D)
-private val TvAccent = Color(0xFFB7E66E)
-private val TvText = Color(0xFFF4F6FA)
-private val TvMuted = Color(0xFFACB7C7)
+private val TvBackground = Color(0xFF0D131A)
+private val TvPanel = Color(0xFF18212B)
+private val TvPanelRaised = Color(0xFF24313D)
+private val TvAccent = Color(0xFFC89452)
+private val TvFocus = Color(0xFFF0B65A)
+private val TvFocusBorder = Color(0xFFFFF3DD)
+private val TvText = Color(0xFFF4F1E9)
+private val TvMuted = Color(0xFFA7B0BA)
 
 private enum class TvTab(val title: String) {
     RECOMMEND("推荐"),
@@ -776,7 +778,7 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
             .clickable(onClick = onClick)
             .focusable(),
         color = when {
-            focused -> Color(0xFFFFD600)
+            focused -> TvFocus
             selected -> TvAccent
             else -> TvPanel
         },
@@ -815,7 +817,7 @@ private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
             }
             .clickable(onClick = onClick).focusable(),
         shape = RoundedCornerShape(20.dp),
-        color = if (focused) Color(0xFFFFD600) else if (selected) TvAccent else TvPanel,
+        color = if (focused) TvFocus else if (selected) TvAccent else TvPanel,
         border = if (focused) BorderStroke(4.dp, Color.White) else null
     ) {
         Box(Modifier.padding(horizontal = 15.dp), contentAlignment = Alignment.Center) {
@@ -854,7 +856,7 @@ private fun CatalogCardView(
             .focusable(),
         color = if (focused) TvPanelRaised else TvPanel,
         shape = RoundedCornerShape(12.dp),
-        border = if (focused) BorderStroke(3.dp, TvAccent) else null
+        border = if (focused) BorderStroke(3.dp, TvFocusBorder) else null
     ) {
         Column(Modifier.padding(8.dp)) {
             Box(
@@ -993,7 +995,7 @@ private fun DetailScreen(
                                 else -> TvPanel
                             },
                             border = when {
-                                focused -> BorderStroke(2.dp, Color.White)
+                                focused -> BorderStroke(3.dp, TvFocusBorder)
                                 selected -> BorderStroke(1.dp, TvAccent)
                                 else -> null
                             }
@@ -1011,14 +1013,14 @@ private fun DetailScreen(
                                 Text(
                                     season.title,
                                     fontSize = 11.sp,
-                                    color = if (selected) Color(0xFF354526) else TvMuted,
+                                    color = if (selected) Color(0xFF352515) else TvMuted,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     if (season.episodeCount > 0) "${season.episodeCount} 集" else "暂未更新",
                                     fontSize = 11.sp,
-                                    color = if (selected) Color(0xFF354526) else TvMuted
+                                    color = if (selected) Color(0xFF352515) else TvMuted
                                 )
                             }
                         }
@@ -1050,18 +1052,18 @@ private fun DetailScreen(
                                 .focusable(),
                             shape = RoundedCornerShape(10.dp),
                             color = when {
+                                focused -> TvFocus
                                 focusedEpisode == episode.number -> TvAccent
-                                focused -> TvPanelRaised
                                 else -> TvPanel
                             },
-                            border = if (focused) BorderStroke(2.dp, Color.White) else null
+                            border = if (focused) BorderStroke(3.dp, TvFocusBorder) else null
                         ) {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Text(
                                     episode.number.toString(),
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (focusedEpisode == episode.number) TvBackground else TvText
+                                    color = if (focused || focusedEpisode == episode.number) TvBackground else TvText
                                 )
                             }
                         }
@@ -1168,9 +1170,9 @@ private fun HandoffToggleRow(
     var focused by remember { mutableStateOf(false) }
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = if (focused) Color(0xFFFFD600) else TvPanel,
+        color = if (focused) TvFocus else TvPanel,
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(if (focused) 4.dp else 1.dp, if (focused) Color.White else TvPanelRaised)
+        border = BorderStroke(if (focused) 4.dp else 1.dp, if (focused) TvFocusBorder else TvPanelRaised)
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp),
@@ -1189,7 +1191,7 @@ private fun HandoffToggleRow(
                 Text(
                     if (enabled) "已开启：应用在前台时，手机可以发现电视并发送播放任务。"
                     else "已关闭：停止广播接力服务，也不接收接力任务。",
-                    color = if (focused) Color(0xFF252525) else TvMuted,
+                    color = if (focused) Color(0xFF352515) else TvMuted,
                     fontSize = 14.sp
                 )
             }
@@ -1341,7 +1343,6 @@ private fun SettingsScreen(
         SettingsActionRow(
             title = "恢复所有画面设置默认",
             description = "界面和视频都恢复到 100%，四条边扩展值清零",
-            focusedColor = Color(0xFFFF4D4F),
             onClick = {
                 onCalibrationChange(DisplayCalibration())
             }
@@ -1362,7 +1363,7 @@ private fun SettingsActionRow(
     title: String,
     description: String,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    focusedColor: Color = Color(0xFFFFD600),
+    focusedColor: Color = TvFocus,
     onClick: () -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
@@ -1378,7 +1379,7 @@ private fun SettingsActionRow(
             .focusable(),
         color = if (focused) focusedColor else TvPanel,
         shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(if (focused) 5.dp else 2.dp, if (focused) Color.White else TvPanelRaised),
+        border = BorderStroke(if (focused) 5.dp else 2.dp, if (focused) TvFocusBorder else TvPanelRaised),
         shadowElevation = if (focused) 8.dp else 0.dp
     ) {
         Row(
@@ -1397,7 +1398,7 @@ private fun SettingsActionRow(
                 )
                 Text(
                     description,
-                    color = if (focused) Color(0xFF252525) else TvMuted,
+                    color = if (focused) Color(0xFF352515) else TvMuted,
                     fontSize = 15.sp
                 )
             }
