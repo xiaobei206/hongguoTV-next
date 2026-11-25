@@ -1,3 +1,10 @@
+## 2026-11-25：v0.1.13 修复图标资源解析与启动闪退
+
+- 复盘 v0.1.12：Manifest 的 `@drawable/tv_icon` 与首页 Compose 同时引用新增的 `drawable-nodpi/*.webp` 位图。桌面图标出现系统默认 Android 占位图；首页又在 Activity 初次组合时同步加载该图，可能因资源解析异常直接退出。
+- 移除 v0.1.12 新引入的两张 WebP，系统图标、首页品牌标志和 TV banner 全部恢复为原生 Android VectorDrawable，避免依赖额外位图解码；首页与 Manifest 复用同一 `tv_icon` 资源。
+- 保留冰青底与红橙金果形播放符号的品牌方向，以原生矢量路径绘制，确保 Android 6.0+ 资源兼容。
+- 版本升级至 versionCode 14 / versionName 0.1.13；同步 Android CI artifact 命名、签名校验与正式 Release 工作流。CI 将验证资源编译、测试、Universal APK、签名与 SHA-256；启动实机仍需确认。
+
 ## 2026-11-25：v0.1.12 渐变品牌与焦点逻辑回归
 
 - 按用户选择的第三款图形语言保留果形丝带、播放三角和叶片；为提升电视桌面暗色背景上的可见度，使用高明度冰青渐变底搭配红橙金渐变标志，并同步制作 TV 横幅。

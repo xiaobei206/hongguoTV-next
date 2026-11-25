@@ -1,3 +1,15 @@
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/tv_icon_launcher" />
-</layer-list>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path android:fillColor="#DDF5F6" android:pathData="M0,0h512v512h-512z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M96,5H416C466,5 507,46 507,96V416C507,466 466,507 416,507H96C46,507 5,466 5,416V96C5,46 46,5 96,5Z" />
+    <path android:fillColor="#C9F0F2" android:pathData="M100,17H412C458,17 495,54 495,100V412C495,458 458,495 412,495H100C54,495 17,458 17,412V100C17,54 54,17 100,17Z" />
+    <path android:fillColor="#F01648" android:pathData="M92,258C92,183 144,129 211,140C228,143 248,153 268,160L397,205C430,217 443,246 428,275C420,291 400,305 378,317L219,405C167,434 113,402 101,352C94,326 92,291 92,258Z" />
+    <path android:fillColor="#FF7629" android:pathData="M95,253C101,190 145,145 205,140C227,139 249,151 270,160L397,205C417,212 431,227 435,246C399,241 368,239 333,242L205,208C163,197 126,215 95,253Z" />
+    <path android:fillColor="#FFD052" android:pathData="M145,169C165,148 185,139 211,140C230,143 249,153 268,160L397,205C413,210 424,219 431,234C393,226 361,219 326,209L210,177C186,170 163,168 145,169Z" />
+    <path android:fillColor="#FF315E" android:pathData="M100,286C139,250 171,263 207,287C246,313 280,338 317,323L378,317L219,405C167,434 113,402 101,352C96,333 97,308 100,286Z" />
+    <path android:fillColor="#C9F0F2" android:pathData="M209,228C209,215 222,208 234,215L299,253C312,260 312,277 299,284L234,324C222,331 209,324 209,311Z" />
+    <path android:fillColor="#FFCE52" android:pathData="M264,130C255,89 291,59 351,63C345,101 313,130 264,130Z" />
+</vector>

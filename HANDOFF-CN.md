@@ -2,7 +2,7 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.12`（冰青渐变品牌图标与首页 LOGO；焦点仅在聚焦时金色填充；播放器恢复 500ms/3s/5s 分场景自动隐藏，诊断焦点并入控制栏并缩小按钮；待 CI 与实机验收）
+- **版本：** `0.1.13`（修复 v0.1.12 的位图图标/首页资源风险：应用图标、首页 LOGO 和 TV banner 全部使用原生 VectorDrawable；保留统一焦点与播放器分场景计时；待 CI 与启动实机验收）
 - **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
@@ -12,7 +12,8 @@
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvPlayerScreen.kt`：电视播放器遥控状态机、自动隐藏控制栏与 STATS FOR NERDS 悬浮层；视频 TextureView 缩放/平移与 UI 叠层校准分开。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/DisplayCalibration.kt`：校准参数、四边独立扩展范围以及测试框几何计算。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/DisplayCalibrationScreen.kt`：界面/视频的全屏高对比测试图和遥控器校准按钮。
-- `.github/workflows/publish-v0.1.12.yml`：v0.1.12 最终标记提交对应的 Android CI 成功后，校验正式签名 APK、证书与 SHA-256 并创建正式 Release。
+- `.github/workflows/publish-v0.1.12.yml`：v0.1.12 历史正式发布流程。
+- `.github/workflows/publish-v0.1.13.yml`：v0.1.13 最终标记提交对应的 Android CI 成功后，校验正式签名 APK、证书与 SHA-256 并创建正式 Release。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvApplication.kt`：SDK、AppModel、CoverStore、Media3 和接力服务生命周期。
 - `model/`：开心果的模型、Feed、分页、收藏/历史、搜索和播放状态机。
 - `covers/CoverStore.kt`：封面内存/磁盘缓存与 URL 请求去重。

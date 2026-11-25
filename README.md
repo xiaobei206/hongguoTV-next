@@ -1,6 +1,6 @@
 # 红果 TV Next
 
-> 当前开发版本：**v0.1.12**。更新冰青渐变品牌图标和首页 LOGO；导航、筛选、详情、设置和播放器统一为“焦点时金色填充＋深色文字，移开即恢复”。播放器恢复 500ms/3s/5s 分场景自动隐藏，诊断操作纳入同一焦点组，控制按钮缩小。正式构建与电视实机焦点行为待验收。
+> 当前开发版本：**v0.1.13**。修复 v0.1.12 引入的位图资源启动风险：系统图标、首页 LOGO 与 TV banner 均改用原生 Android VectorDrawable。统一焦点状态、播放器分场景计时和紧凑控制按钮继续保留。
 
 独立的新一代 Android TV 客户端。所有新版开发仅写入本仓库；旧版 [hongguoTV](https://github.com/xiaobei206/hongguoTV) 保持只读，手机/平板项目 [kaixinguo-android](https://github.com/xiaobei206/kaixinguo-android) 是核心架构参考。
 
