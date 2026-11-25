@@ -171,7 +171,11 @@ class MainActivity : ComponentActivity() {
                 BackHandler(enabled = screen != TvScreen.BROWSE || tab != TvTab.RECOMMEND) {
                     goBack(model)
                 }
-                Box(Modifier.fillMaxSize().background(Color.Black).clipToBounds()) {
+                Surface(
+                    modifier = Modifier.fillMaxSize().clipToBounds(),
+                    color = Color.Black,
+                    contentColor = TvText
+                ) {
                     Box(
                         Modifier.fillMaxSize().graphicsLayer {
                             // Settings and calibration test screens remain fixed and recoverable.
@@ -799,7 +803,7 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
             else -> TvPanel
         },
         shape = RoundedCornerShape(10.dp),
-        border = if (!focused && selected) BorderStroke(1.dp, TvAccent) else null,
+        border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
         shadowElevation = if (focused) 5.dp else 0.dp
     ) {
         Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
@@ -839,7 +843,7 @@ private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
             selected -> TvPanelRaised
             else -> TvPanel
         },
-        border = if (!focused && selected) BorderStroke(1.dp, TvAccent) else null,
+        border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
         shadowElevation = if (focused) 4.dp else 0.dp
     ) {
         Box(Modifier.padding(horizontal = 15.dp), contentAlignment = Alignment.Center) {
@@ -879,11 +883,7 @@ private fun TvActionButton(
             else -> TvPanel
         },
         shape = RoundedCornerShape(10.dp),
-        border = when {
-            focused -> BorderStroke(1.dp, Color(0xFFFFD99A))
-            prominent && enabled -> BorderStroke(1.dp, TvAccent)
-            else -> BorderStroke(1.dp, TvPanelRaised)
-        },
+        border = if (focused) BorderStroke(1.dp, TvFocusBorder) else BorderStroke(1.dp, TvPanelRaised),
         shadowElevation = if (focused) 5.dp else 0.dp
     ) {
         Box(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
@@ -1018,7 +1018,7 @@ private fun DetailScreen(
                     contentAlignment = Alignment.Center
                 ) { Text("封面加载中", color = TvMuted) }
             }
-            Text(title, fontSize = 23.sp, fontWeight = FontWeight.Bold)
+            Text(title, fontSize = 23.sp, fontWeight = FontWeight.Bold, color = TvText)
             Text("共 ${series?.episodeCount ?: page.episodes.size} 集", color = TvMuted, fontSize = 15.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TvActionButton(
@@ -1049,7 +1049,7 @@ private fun DetailScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text("同系列", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("同系列", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TvText)
                     Text("${seasons.size} 季", color = TvMuted, fontSize = 14.sp)
                 }
                 LazyRow(
@@ -1073,7 +1073,7 @@ private fun DetailScreen(
                                 selected -> TvPanelRaised
                                 else -> TvPanel
                             },
-                            border = if (!focused && selected) BorderStroke(1.dp, TvAccent) else null,
+                            border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
                             shadowElevation = if (focused) 5.dp else 0.dp
                         ) {
                             Column(
@@ -1105,7 +1105,7 @@ private fun DetailScreen(
             } else if (series?.isMultiSeason == true && page.seasons == null) {
                 Text("正在获取同系列季信息…", fontSize = 14.sp, color = TvMuted)
             }
-            Text("选集", fontSize = 31.sp, fontWeight = FontWeight.Bold)
+            Text("选集", fontSize = 31.sp, fontWeight = FontWeight.Bold, color = TvText)
             when {
                 page.loading && page.episodes.isEmpty() -> Text("正在加载详情和选集…", color = TvMuted)
                 page.error != null && page.episodes.isEmpty() -> Text("加载失败：${page.error?.message ?: "未知错误"}", color = TvMuted)
@@ -1132,7 +1132,7 @@ private fun DetailScreen(
                                 focusedEpisode == episode.number -> TvPanelRaised
                                 else -> TvPanel
                             },
-                            border = if (!focused && focusedEpisode == episode.number) BorderStroke(1.dp, TvAccent) else null,
+                            border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
                             shadowElevation = if (focused) 5.dp else 0.dp
                         ) {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
