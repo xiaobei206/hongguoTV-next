@@ -2,7 +2,7 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.9`（老电视界面校准与视频画面独立缩放/平移；待 CI 和目标电视验收）
+- **版本：** `0.1.10`（全屏高对比测试图；界面与视频分别等比例缩放并独立扩展四边；待 CI 和目标电视验收）
 - **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
@@ -10,7 +10,8 @@
 ## 重要文件
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/MainActivity.kt`：TV 主流程、搜索热搜/日期标签和设备接力回调。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvPlayerScreen.kt`：电视播放器遥控状态机、自动隐藏控制栏与 STATS FOR NERDS 悬浮层；视频 TextureView 缩放/平移与 UI 叠层校准分开。
-- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/DisplayCalibration.kt`：校准参数默认值、步进边界与安全范围。
+- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/DisplayCalibration.kt`：校准参数、四边独立扩展范围以及测试框几何计算。
+- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/DisplayCalibrationScreen.kt`：界面/视频的全屏高对比测试图和遥控器校准按钮。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvApplication.kt`：SDK、AppModel、CoverStore、Media3 和接力服务生命周期。
 - `model/`：开心果的模型、Feed、分页、收藏/历史、搜索和播放状态机。
 - `covers/CoverStore.kt`：封面内存/磁盘缓存与 URL 请求去重。
@@ -62,9 +63,13 @@
 6. 在目标电视上验收 v0.1.2 播放/遥控器，并用真实手机回归设备接力。
 
 
-## v0.1.9 老电视画面校准
-- 设置页分别调整界面和视频画面的缩放/位移，六个参数即时保存并支持分别恢复默认；UI 缩放 70%–110%，视频等比例缩放 70%–160%。
-- 视频表面采用 TextureView 以支持缩放和平移；老电视性能、视频比例与裁切效果待实机验收。
+## v0.1.10 四边独立画面校准
+- 先按 5 个百分点等比例缩放（70%–100%），再每次 0.5% 只向外扩展上/下/左/右指定边缘；没有整体平移动作。
+- 界面和视频分两张全屏高对比测试图校准，独立自动保存，支持本项恢复和一键全部恢复。焦点以亮红色、白色粗边框与放大显示。
+- 视频表面采用 TextureView 以支持各边独立调整；非等比例扩边会导致图像拉伸，这是独立边缘校正的预期行为。老电视实际边缘与焦点需实机验收。
+
+## v0.1.9 老电视画面校准（初版，后由 v0.1.10 重做）
+- 初版提供等比例缩放和位置调整；实际电视操作反馈显示控件密集、焦点对比不足、方向逻辑错误，v0.1.10 改为四边独立扩展并使用高对比测试画面。
 
 ## v0.1.8 开心果三图诊断面板
 - 诊断面板按开心果原实现显示 Connection Speed、Network Activity、Buffer Health 三条图，统一字号、颜色、底板和扫描游标。
