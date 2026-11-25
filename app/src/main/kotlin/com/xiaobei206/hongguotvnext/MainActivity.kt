@@ -1074,7 +1074,7 @@ private fun DetailScreen(
                     "继续播放",
                     enabled = page.episodes.isNotEmpty(),
                     prominent = true,
-                    modifier = Modifier.focusRequester(continueFocusRequester),
+                    modifier = episodeEntryModifier.focusRequester(continueFocusRequester),
                     onClick = {
                         val watch = model.history.get(seriesId)
                         val episode = watch?.episode ?: 1
