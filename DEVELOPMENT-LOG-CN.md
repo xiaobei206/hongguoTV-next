@@ -15,7 +15,7 @@
 - 根据旧电视屏幕边缘裁切/尺寸异常的需求，参照 Kodi 的界面 Zoom 与 Video Calibration 分离设计，以及 Android TV 对 overscan-safe area 的建议，决定分别校准界面和视频，不用单一缩放值把控制面板和视频内容混在一起。
 - 设置页增加“界面校准”：70%–110% 缩放、水平/垂直各 ±120 dp 偏移；方向按钮每步 8 dp，缩放按钮每步 5 个百分点。该校准作用于首页、详情、诊断、设置及播放控制/诊断叠层，不缩放视频本身。
 - 设置页增加“视频画面”：70%–160% 等比例缩放、水平/垂直各 ±320 dp 偏移；视频表面和 UI 叠层分离，避免缩放视频时连带放大播放菜单/诊断文字。六个参数存入本机 SharedPreferences，实时应用、下次启动保留、各自可恢复默认。
-- 为视频变换使用 Media3 PlayerView 的 TextureView 表面，因为 SurfaceView 不适合任意图形变换；这可能比原 SurfaceView 增加耗电/合成开销，需在老电视播放实机检查是否出现掉帧、黑屏或比例异常。
+- 视频校准不再直接变换内层 TextureView，而是在全屏 AndroidView/PlayerView 视口上使用 Compose graphicsLayer 映射同一组四边坐标；PlayerView 内部仍使用 fit 保持默认 100% 的原始等比例适配。TextureView 仍作为可随视口变换的画面表面。只有非等比例扩展边缘时，最终视口内容才可能被拉伸。仍需在旧电视检查掉帧、黑屏和字幕/缓冲指示的变换表现。
 - 新增 DisplayCalibration 的范围裁剪/默认值单元测试；已更新 app versionCode 10 / versionName 0.1.9、Android CI Artifact 版本名与正式发布工作流。当前不能提前声称编译或电视播放已通过，待 CI 结果和目标电视实测确认。
 
 ## 2026-11-25：v0.1.6 系列剧跨季选择
