@@ -85,8 +85,8 @@ android {
         // API 23 keeps one installable build for Android 6.0-era TVs.
         minSdk = 23
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.1.9"
+        versionCode = 11
+        versionName = "0.1.10"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
