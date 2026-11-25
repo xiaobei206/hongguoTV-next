@@ -768,22 +768,27 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
     Surface(
         modifier = Modifier.fillMaxWidth().height(46.dp)
             .onFocusChanged { focused = it.isFocused }
+            .graphicsLayer {
+                val emphasis = if (focused) 1.025f else 1f
+                scaleX = emphasis
+                scaleY = emphasis
+            }
             .clickable(onClick = onClick)
             .focusable(),
         color = when {
+            focused -> Color(0xFFFFD600)
             selected -> TvAccent
-            focused -> TvPanelRaised
             else -> TvPanel
         },
         shape = RoundedCornerShape(10.dp),
-        border = if (focused) BorderStroke(2.dp, Color.White) else null
+        border = if (focused) BorderStroke(4.dp, Color.White) else null
     ) {
         Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
             Text(
                 title,
-                color = if (selected) TvBackground else TvText,
+                color = if (selected || focused) Color.Black else TvText,
                 fontSize = 17.sp,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                fontWeight = if (selected || focused) FontWeight.ExtraBold else FontWeight.Medium
             )
         }
     }
@@ -801,14 +806,25 @@ private fun FilterRow(content: @Composable () -> Unit) {
 private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
     Surface(
-        modifier = Modifier.height(40.dp).onFocusChanged { focused = it.isFocused }
+        modifier = Modifier.height(40.dp)
+            .onFocusChanged { focused = it.isFocused }
+            .graphicsLayer {
+                val emphasis = if (focused) 1.04f else 1f
+                scaleX = emphasis
+                scaleY = emphasis
+            }
             .clickable(onClick = onClick).focusable(),
         shape = RoundedCornerShape(20.dp),
-        color = if (selected) TvAccent else if (focused) TvPanelRaised else TvPanel,
-        border = if (focused) BorderStroke(2.dp, Color.White) else null
+        color = if (focused) Color(0xFFFFD600) else if (selected) TvAccent else TvPanel,
+        border = if (focused) BorderStroke(4.dp, Color.White) else null
     ) {
         Box(Modifier.padding(horizontal = 15.dp), contentAlignment = Alignment.Center) {
-            Text(label, color = if (selected) TvBackground else TvText, fontSize = 15.sp)
+            Text(
+                label,
+                color = if (selected || focused) Color.Black else TvText,
+                fontSize = 15.sp,
+                fontWeight = if (focused) FontWeight.ExtraBold else FontWeight.Medium
+            )
         }
     }
 }
