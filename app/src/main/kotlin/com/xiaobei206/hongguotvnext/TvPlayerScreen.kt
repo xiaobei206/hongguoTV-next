@@ -1,7 +1,6 @@
 package com.xiaobei206.hongguotvnext
 
 import android.view.LayoutInflater
-import android.view.TextureView
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
@@ -284,14 +283,28 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                     setShutterBackgroundColor(android.graphics.Color.BLACK)
                     isFocusable = false
                     isFocusableInTouchMode = false
-                    applyVideoCalibration(calibration)
                 }
             },
             update = { view ->
                 if (view.player !== exo) view.player = exo
-                view.applyVideoCalibration(calibration)
             },
-            modifier = Modifier.fillMaxSize()
+            // Transform the complete full-screen viewport. At 100% this preserves PlayerView's
+            // normal aspect-fit behavior; individual edge expansion may intentionally stretch it.
+            modifier = Modifier.fillMaxSize().graphicsLayer {
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+                if (size.width <= 0f || size.height <= 0f) {
+                    scaleX = 1f
+                    scaleY = 1f
+                    translationX = 0f
+                    translationY = 0f
+                } else {
+                    val bounds = calibration.bounds(CalibrationTarget.VIDEO, size.width, size.height)
+                    scaleX = (bounds.right - bounds.left) / size.width
+                    scaleY = (bounds.bottom - bounds.top) / size.height
+                    translationX = bounds.left
+                    translationY = bounds.top
+                }
+            }
         )
 
         // Keep the video surface full-screen. Only the playback controls,
@@ -470,30 +483,6 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
         }
         }
     }
-}
-
-private fun PlayerView.applyVideoCalibration(calibration: DisplayCalibration) {
-    val surface = videoSurfaceView as? TextureView ?: return
-
-    fun applyToLaidOutSurface() {
-        if (surface.width <= 0 || surface.height <= 0) return
-        val bounds = calibration.bounds(
-            CalibrationTarget.VIDEO,
-            surface.width.toFloat(),
-            surface.height.toFloat()
-        )
-        // A top-left pivot means each edge's target coordinate is applied directly.
-        // No direction control ever translates the whole picture.
-        surface.pivotX = 0f
-        surface.pivotY = 0f
-        surface.scaleX = (bounds.right - bounds.left) / surface.width
-        surface.scaleY = (bounds.bottom - bounds.top) / surface.height
-        surface.translationX = bounds.left
-        surface.translationY = bounds.top
-    }
-
-    if (surface.width > 0 && surface.height > 0) applyToLaidOutSurface()
-    else surface.post { applyToLaidOutSurface() }
 }
 
 private data class PlaybackStatsSample(
