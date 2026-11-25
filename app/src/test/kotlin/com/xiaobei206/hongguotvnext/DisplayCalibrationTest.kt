@@ -40,7 +40,7 @@ class DisplayCalibrationTest {
         val bounds = c.bounds(CalibrationTarget.INTERFACE, 1920f, 1080f)
         assertEquals(0f, bounds.left, 0.001f)
         assertEquals(1080f, bounds.bottom, 0.001f)
-        assertEquals(0.025f * 1920f, bounds.right, 0.001f)
+        assertEquals(0.975f * 1920f, bounds.right, 0.001f)
         assertEquals(0.025f * 1080f, bounds.top, 0.001f)
     }
 
@@ -71,7 +71,7 @@ class DisplayCalibrationTest {
         )
         val ui = c.bounds(CalibrationTarget.INTERFACE, 1000f, 600f)
         val video = c.bounds(CalibrationTarget.VIDEO, 1000f, 600f)
-        assertEquals(35f, ui.left, 0.001f)
-        assertEquals(975f, video.right, 0.001f)
+        assertEquals(15f, ui.left, 0.001f)
+        assertEquals(970f, video.right, 0.001f)
     }
 }
