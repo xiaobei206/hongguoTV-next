@@ -124,7 +124,7 @@ private enum class TvTab(val title: String) {
     SETTINGS("设置"),
 }
 
-private enum class TvScreen { BROWSE, DETAIL, PLAYER, DEVICE, DIAGNOSTICS, SETTINGS }
+private enum class TvScreen { BROWSE, DETAIL, PLAYER, DEVICE, DIAGNOSTICS, SETTINGS, CALIBRATE_INTERFACE, CALIBRATE_VIDEO }
 
 @androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class MainActivity : ComponentActivity() {
@@ -144,11 +144,15 @@ class MainActivity : ComponentActivity() {
         handoffEnabled = tvApp.handoffServer?.enabled ?: true
         displayCalibration = DisplayCalibration(
             interfaceScalePercent = calibrationPreferences.getInt("interface_scale_percent", 100),
-            interfaceOffsetXDp = calibrationPreferences.getInt("interface_offset_x_dp", 0),
-            interfaceOffsetYDp = calibrationPreferences.getInt("interface_offset_y_dp", 0),
+            interfaceLeftExpandSteps = calibrationPreferences.getInt("interface_left_expand_steps", 0),
+            interfaceRightExpandSteps = calibrationPreferences.getInt("interface_right_expand_steps", 0),
+            interfaceTopExpandSteps = calibrationPreferences.getInt("interface_top_expand_steps", 0),
+            interfaceBottomExpandSteps = calibrationPreferences.getInt("interface_bottom_expand_steps", 0),
             videoScalePercent = calibrationPreferences.getInt("video_scale_percent", 100),
-            videoOffsetXDp = calibrationPreferences.getInt("video_offset_x_dp", 0),
-            videoOffsetYDp = calibrationPreferences.getInt("video_offset_y_dp", 0),
+            videoLeftExpandSteps = calibrationPreferences.getInt("video_left_expand_steps", 0),
+            videoRightExpandSteps = calibrationPreferences.getInt("video_right_expand_steps", 0),
+            videoTopExpandSteps = calibrationPreferences.getInt("video_top_expand_steps", 0),
+            videoBottomExpandSteps = calibrationPreferences.getInt("video_bottom_expand_steps", 0),
         ).normalized()
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(
@@ -168,17 +172,27 @@ class MainActivity : ComponentActivity() {
                 Box(Modifier.fillMaxSize().background(Color.Black).clipToBounds()) {
                     Box(
                         Modifier.fillMaxSize().graphicsLayer {
-                            // Keep the SurfaceView-based player viewport untouched. Its overlay
-                            // controls are calibrated independently inside TvPlayerScreen.
-                            val calibration = displayCalibration
-                            val scale = if (screen == TvScreen.PLAYER) 1f
-                                else calibration.interfaceScalePercent / 100f
-                            scaleX = scale
-                            scaleY = scale
-                            translationX = if (screen == TvScreen.PLAYER) 0f
-                                else calibration.interfaceOffsetXDp.dp.toPx()
-                            translationY = if (screen == TvScreen.PLAYER) 0f
-                                else calibration.interfaceOffsetYDp.dp.toPx()
+                            // Settings and calibration test screens remain fixed and recoverable.
+                            // On app screens, each edge expands independently; this is not a translation.
+                            transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+                            val fixedScreen = screen == TvScreen.PLAYER ||
+                                screen == TvScreen.SETTINGS ||
+                                screen == TvScreen.CALIBRATE_INTERFACE ||
+                                screen == TvScreen.CALIBRATE_VIDEO
+                            if (fixedScreen || size.width <= 0f || size.height <= 0f) {
+                                scaleX = 1f
+                                scaleY = 1f
+                                translationX = 0f
+                                translationY = 0f
+                            } else {
+                                val bounds = displayCalibration.bounds(
+                                    CalibrationTarget.INTERFACE, size.width, size.height
+                                )
+                                scaleX = (bounds.right - bounds.left) / size.width
+                                scaleY = (bounds.bottom - bounds.top) / size.height
+                                translationX = bounds.left
+                                translationY = bounds.top
+                            }
                         }
                     ) {
                 when (screen) {
@@ -245,7 +259,21 @@ class MainActivity : ComponentActivity() {
                         onHandoffEnabledChange = ::updateHandoffEnabled,
                         calibration = displayCalibration,
                         onCalibrationChange = ::updateDisplayCalibration,
+                        onOpenInterfaceCalibration = { screen = TvScreen.CALIBRATE_INTERFACE },
+                        onOpenVideoCalibration = { screen = TvScreen.CALIBRATE_VIDEO },
                         onBack = { screen = TvScreen.BROWSE }
+                    )
+                    TvScreen.CALIBRATE_INTERFACE -> DisplayCalibrationScreen(
+                        target = CalibrationTarget.INTERFACE,
+                        calibration = displayCalibration,
+                        onCalibrationChange = ::updateDisplayCalibration,
+                        onBack = { screen = TvScreen.SETTINGS }
+                    )
+                    TvScreen.CALIBRATE_VIDEO -> DisplayCalibrationScreen(
+                        target = CalibrationTarget.VIDEO,
+                        calibration = displayCalibration,
+                        onCalibrationChange = ::updateDisplayCalibration,
+                        onBack = { screen = TvScreen.SETTINGS }
                     )
                 }
                     }
@@ -272,6 +300,8 @@ class MainActivity : ComponentActivity() {
                 model?.player?.leave()
                 screen = playerReturnScreen
             }
+            TvScreen.CALIBRATE_INTERFACE, TvScreen.CALIBRATE_VIDEO ->
+                screen = TvScreen.SETTINGS
             TvScreen.DETAIL, TvScreen.DEVICE, TvScreen.DIAGNOSTICS, TvScreen.SETTINGS ->
                 screen = TvScreen.BROWSE
             TvScreen.BROWSE -> if (tab != TvTab.RECOMMEND) tab = TvTab.RECOMMEND
@@ -316,11 +346,15 @@ class MainActivity : ComponentActivity() {
         displayCalibration = safe
         calibrationPreferences.edit()
             .putInt("interface_scale_percent", safe.interfaceScalePercent)
-            .putInt("interface_offset_x_dp", safe.interfaceOffsetXDp)
-            .putInt("interface_offset_y_dp", safe.interfaceOffsetYDp)
+            .putInt("interface_left_expand_steps", safe.interfaceLeftExpandSteps)
+            .putInt("interface_right_expand_steps", safe.interfaceRightExpandSteps)
+            .putInt("interface_top_expand_steps", safe.interfaceTopExpandSteps)
+            .putInt("interface_bottom_expand_steps", safe.interfaceBottomExpandSteps)
             .putInt("video_scale_percent", safe.videoScalePercent)
-            .putInt("video_offset_x_dp", safe.videoOffsetXDp)
-            .putInt("video_offset_y_dp", safe.videoOffsetYDp)
+            .putInt("video_left_expand_steps", safe.videoLeftExpandSteps)
+            .putInt("video_right_expand_steps", safe.videoRightExpandSteps)
+            .putInt("video_top_expand_steps", safe.videoTopExpandSteps)
+            .putInt("video_bottom_expand_steps", safe.videoBottomExpandSteps)
             .apply()
     }
 
@@ -1115,27 +1149,41 @@ private fun HandoffToggleRow(
     onEnabledChange: (Boolean) -> Unit,
     controlEnabled: Boolean = true
 ) {
-    Row(
-        Modifier.fillMaxWidth().background(TvPanel, RoundedCornerShape(12.dp)).padding(horizontal = 18.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+    var focused by remember { mutableStateOf(false) }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = if (focused) Color(0xFFFFD600) else TvPanel,
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(if (focused) 4.dp else 1.dp, if (focused) Color.White else TvPanelRaised)
     ) {
-        Column(
-            Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("设备接力（手机投屏）", fontSize = 19.sp, fontWeight = FontWeight.SemiBold)
-            Text(
-                if (enabled) "已开启：应用在前台时，手机可以发现电视并发送播放任务。"
-                else "已关闭：停止广播接力服务，也不接收手机投屏任务。",
-                color = TvMuted,
-                fontSize = 14.sp
+            Column(
+                Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    "设备接力（手机投屏）",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (focused) Color.Black else TvText
+                )
+                Text(
+                    if (enabled) "已开启：应用在前台时，手机可以发现电视并发送播放任务。"
+                    else "已关闭：停止广播接力服务，也不接收接力任务。",
+                    color = if (focused) Color(0xFF252525) else TvMuted,
+                    fontSize = 14.sp
+                )
+            }
+            Switch(
+                modifier = Modifier.onFocusChanged { focused = it.isFocused },
+                checked = enabled,
+                onCheckedChange = onEnabledChange,
+                enabled = controlEnabled
             )
         }
-        Switch(
-            checked = enabled,
-            onCheckedChange = onEnabledChange,
-            enabled = controlEnabled
-        )
     }
 }
 
@@ -1233,79 +1281,28 @@ private fun SettingsScreen(
     onHandoffEnabledChange: (Boolean) -> Unit,
     calibration: DisplayCalibration,
     onCalibrationChange: (DisplayCalibration) -> Unit,
+    onOpenInterfaceCalibration: () -> Unit,
+    onOpenVideoCalibration: () -> Unit,
     onBack: () -> Unit
 ) {
     Column(
-        Modifier.fillMaxSize().background(TvBackground).padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        Modifier.fillMaxSize().background(TvBackground).padding(34.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("设置", fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    "界面校准和视频画面调整会即时生效，并自动保存在本机。",
-                    fontSize = 14.sp,
-                    color = TvMuted
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text("设置", fontSize = 34.sp, fontWeight = FontWeight.ExtraBold)
+                Text("选择要调整的项目；画面校准会进入全屏高对比测试图。", color = TvMuted, fontSize = 17.sp)
             }
-            TextButton(onClick = onBack) { Text("返回") }
-        }
-
-        Row(
-            Modifier.weight(1f).fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            CalibrationPanel(
-                modifier = Modifier.weight(1f),
-                title = "界面校准",
-                description = "调整首页、详情和播放控制层。缩小可避免电视裁切边缘；方向键按钮用于移动整个界面。",
-                scalePercent = calibration.interfaceScalePercent,
-                minScale = DisplayCalibration.INTERFACE_SCALE_MIN,
-                maxScale = DisplayCalibration.INTERFACE_SCALE_MAX,
-                offsetXDp = calibration.interfaceOffsetXDp,
-                offsetYDp = calibration.interfaceOffsetYDp,
-                offsetLimitDp = DisplayCalibration.INTERFACE_OFFSET_LIMIT_DP,
-                onScaleChange = { value ->
-                    onCalibrationChange(calibration.copy(interfaceScalePercent = value))
-                },
-                onOffsetChange = { x, y ->
-                    onCalibrationChange(calibration.copy(interfaceOffsetXDp = x, interfaceOffsetYDp = y))
-                },
-                onReset = {
-                    onCalibrationChange(calibration.copy(
-                        interfaceScalePercent = 100,
-                        interfaceOffsetXDp = 0,
-                        interfaceOffsetYDp = 0
-                    ))
-                }
-            )
-            CalibrationPanel(
-                modifier = Modifier.weight(1f),
-                title = "视频画面",
-                description = "只调整视频本身，不移动诊断信息和播放菜单。放大可能裁切边缘，缩小会出现黑边。",
-                scalePercent = calibration.videoScalePercent,
-                minScale = DisplayCalibration.VIDEO_SCALE_MIN,
-                maxScale = DisplayCalibration.VIDEO_SCALE_MAX,
-                offsetXDp = calibration.videoOffsetXDp,
-                offsetYDp = calibration.videoOffsetYDp,
-                offsetLimitDp = DisplayCalibration.VIDEO_OFFSET_LIMIT_DP,
-                onScaleChange = { value ->
-                    onCalibrationChange(calibration.copy(videoScalePercent = value))
-                },
-                onOffsetChange = { x, y ->
-                    onCalibrationChange(calibration.copy(videoOffsetXDp = x, videoOffsetYDp = y))
-                },
-                onReset = {
-                    onCalibrationChange(calibration.copy(
-                        videoScalePercent = 100,
-                        videoOffsetXDp = 0,
-                        videoOffsetYDp = 0
-                    ))
-                }
+            SettingsActionRow(
+                title = "返回主页",
+                description = "离开设置",
+                onClick = onBack,
+                modifier = Modifier.width(220.dp)
             )
         }
 
@@ -1313,123 +1310,87 @@ private fun SettingsScreen(
             enabled = handoffEnabled,
             onEnabledChange = onHandoffEnabledChange
         )
-        Text(
-            "版本：${BuildConfig.VERSION_NAME}  ·  应用 ID：${BuildConfig.APPLICATION_ID}",
-            fontSize = 12.sp,
-            color = TvMuted,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+
+        SettingsActionRow(
+            title = "界面尺寸与边界",
+            description = "先等比例缩放，再分别扩展上、下、左、右边界",
+            onClick = onOpenInterfaceCalibration
         )
+        SettingsActionRow(
+            title = "视频画面尺寸与边界",
+            description = "只调整视频画面；播放控制和诊断浮层不跟着变形",
+            onClick = onOpenVideoCalibration
+        )
+
+        SettingsActionRow(
+            title = "恢复所有画面设置默认",
+            description = "界面和视频都恢复到 100%，四条边扩展值清零",
+            focusedColor = Color(0xFFFF4D4F),
+            onClick = {
+                onCalibrationChange(DisplayCalibration())
+            }
+        )
+
+        Spacer(Modifier.weight(1f))
+        Text(
+            "界面：${calibration.interfaceScalePercent}%  ·  视频：${calibration.videoScalePercent}%  ·  设置自动保存在本机",
+            fontSize = 15.sp,
+            color = TvMuted
+        )
+        Text("版本：${BuildConfig.VERSION_NAME}  ·  应用 ID：${BuildConfig.APPLICATION_ID}", fontSize = 13.sp, color = TvMuted)
     }
 }
 
 @Composable
-private fun CalibrationPanel(
-    modifier: Modifier = Modifier,
+private fun SettingsActionRow(
     title: String,
     description: String,
-    scalePercent: Int,
-    minScale: Int,
-    maxScale: Int,
-    offsetXDp: Int,
-    offsetYDp: Int,
-    offsetLimitDp: Int,
-    onScaleChange: (Int) -> Unit,
-    onOffsetChange: (Int, Int) -> Unit,
-    onReset: () -> Unit
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    focusedColor: Color = Color(0xFFFFD600),
+    onClick: () -> Unit
 ) {
+    var focused by remember { mutableStateOf(false) }
     Surface(
-        modifier = modifier.fillMaxHeight(),
-        color = TvPanel,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, TvPanelRaised)
-    ) {
-        Column(
-            Modifier.fillMaxSize().padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(7.dp)
-        ) {
-            Text(title, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-            Text(
-                description,
-                color = TvMuted,
-                fontSize = 13.sp,
-                lineHeight = 17.sp,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("缩放", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.weight(1f))
-                Button(
-                    onClick = { onScaleChange((scalePercent - DisplayCalibration.SCALE_STEP_PERCENT).coerceAtLeast(minScale)) },
-                    enabled = scalePercent > minScale
-                ) { Text("−") }
-                Text(
-                    "${scalePercent}%",
-                    modifier = Modifier.width(62.dp),
-                    color = TvAccent,
-                    fontSize = 19.sp,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    fontWeight = FontWeight.Bold
-                )
-                Button(
-                    onClick = { onScaleChange((scalePercent + DisplayCalibration.SCALE_STEP_PERCENT).coerceAtMost(maxScale)) },
-                    enabled = scalePercent < maxScale
-                ) { Text("+") }
+        modifier = modifier.height(78.dp)
+            .onFocusChanged { focused = it.isFocused }
+            .graphicsLayer {
+                val emphasis = if (focused) 1.025f else 1f
+                scaleX = emphasis
+                scaleY = emphasis
             }
-
-            Text("位置校正 · 每次移动 ${DisplayCalibration.OFFSET_STEP_DP} dp", color = TvMuted, fontSize = 13.sp)
+            .clickable(onClick = onClick)
+            .focusable(),
+        color = if (focused) focusedColor else TvPanel,
+        shape = RoundedCornerShape(10.dp),
+        border = BorderStroke(if (focused) 5.dp else 2.dp, if (focused) Color.White else TvPanelRaised),
+        shadowElevation = if (focused) 8.dp else 0.dp
+    ) {
+        Row(
+            Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Column(
-                Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Button(
-                    onClick = { onOffsetChange(offsetXDp, (offsetYDp - DisplayCalibration.OFFSET_STEP_DP).coerceAtLeast(-offsetLimitDp)) },
-                    enabled = offsetYDp > -offsetLimitDp
-                ) { Text("↑ 上移") }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Button(
-                        onClick = { onOffsetChange((offsetXDp - DisplayCalibration.OFFSET_STEP_DP).coerceAtLeast(-offsetLimitDp), offsetYDp) },
-                        enabled = offsetXDp > -offsetLimitDp
-                    ) { Text("← 左移") }
-                    Surface(color = TvPanelRaised, shape = RoundedCornerShape(8.dp)) {
-                        Column(
-                            Modifier.width(112.dp).padding(horizontal = 6.dp, vertical = 8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("水平 ${offsetXDp} dp", color = TvText, fontSize = 12.sp, maxLines = 1)
-                            Text("垂直 ${offsetYDp} dp", color = TvText, fontSize = 12.sp, maxLines = 1)
-                        }
-                    }
-                    Button(
-                        onClick = { onOffsetChange((offsetXDp + DisplayCalibration.OFFSET_STEP_DP).coerceAtMost(offsetLimitDp), offsetYDp) },
-                        enabled = offsetXDp < offsetLimitDp
-                    ) { Text("右移 →") }
-                }
-                Button(
-                    onClick = { onOffsetChange(offsetXDp, (offsetYDp + DisplayCalibration.OFFSET_STEP_DP).coerceAtMost(offsetLimitDp)) },
-                    enabled = offsetYDp < offsetLimitDp
-                ) { Text("↓ 下移") }
+                Text(
+                    title,
+                    color = if (focused) Color.Black else TvText,
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    description,
+                    color = if (focused) Color(0xFF252525) else TvMuted,
+                    fontSize = 15.sp
+                )
             }
-
-            Spacer(Modifier.weight(1f))
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                TextButton(onClick = onReset) { Text("恢复此项默认") }
-                Text("自动保存", color = TvMuted, fontSize = 12.sp)
-            }
+            Text(
+                "›",
+                color = if (focused) Color.Black else TvAccent,
+                fontSize = 34.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
         }
     }
 }
