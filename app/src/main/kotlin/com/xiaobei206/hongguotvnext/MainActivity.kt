@@ -453,7 +453,7 @@ private fun BrowseScreen(
                 horizontalArrangement = Arrangement.spacedBy(9.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.tv_icon),
+                    painter = painterResource(id = R.drawable.tv_icon_launcher),
                     contentDescription = "红果 TV",
                     modifier = Modifier.size(52.dp),
                     contentScale = ContentScale.Fit
