@@ -1,5 +1,7 @@
 package com.xiaobei206.hongguotvnext
 
+import android.view.LayoutInflater
+import android.view.TextureView
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
@@ -48,7 +50,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -81,7 +85,7 @@ private val PlayerHudMuted = Color(0xFFB7C0CC)
  */
 @androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 @Composable
-internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit) {
+internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit, calibration: DisplayCalibration) {
     val player = model.player
     val context = LocalContext.current
     val rootFocus = remember { FocusRequester() }
@@ -178,6 +182,7 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
     Box(
         Modifier.fillMaxSize()
             .background(Color.Black)
+            .clipToBounds()
             .focusRequester(rootFocus)
             .onFocusChanged { if (it.isFocused && menuVisible) controlsFocused = false }
             .focusable()
@@ -270,7 +275,8 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
     ) {
         AndroidView(
             factory = { viewContext ->
-                PlayerView(viewContext).apply {
+                (LayoutInflater.from(viewContext)
+                    .inflate(R.layout.tv_player_view_texture, null, false) as PlayerView).apply {
                     useController = false
                     this.player = exo
                     setKeepContentOnPlayerReset(true)
@@ -278,12 +284,26 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                     setShutterBackgroundColor(android.graphics.Color.BLACK)
                     isFocusable = false
                     isFocusableInTouchMode = false
+                    applyVideoCalibration(calibration)
                 }
             },
-            update = { view -> if (view.player !== exo) view.player = exo },
+            update = { view ->
+                if (view.player !== exo) view.player = exo
+                view.applyVideoCalibration(calibration)
+            },
             modifier = Modifier.fillMaxSize()
         )
 
+        // Keep the video surface full-screen. Only the playback controls,
+        // diagnostic panel, and status overlays use the interface calibration.
+        Box(
+            Modifier.fillMaxSize().graphicsLayer {
+                scaleX = calibration.interfaceScalePercent / 100f
+                scaleY = calibration.interfaceScalePercent / 100f
+                translationX = calibration.interfaceOffsetXDp.dp.toPx()
+                translationY = calibration.interfaceOffsetYDp.dp.toPx()
+            }
+        ) {
         // This is an informational overlay, intentionally independent of the
         // controls HUD: it stays visible until toggled off, like Stats for nerds.
         if (diagnosticsVisible) {
@@ -439,7 +459,18 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit)
                 }
             }
         }
+        }
     }
+}
+
+private fun PlayerView.applyVideoCalibration(calibration: DisplayCalibration) {
+    val surface = videoSurfaceView as? TextureView ?: return
+    val density = resources.displayMetrics.density
+    val scale = calibration.videoScalePercent / 100f
+    surface.scaleX = scale
+    surface.scaleY = scale
+    surface.translationX = calibration.videoOffsetXDp * density
+    surface.translationY = calibration.videoOffsetYDp * density
 }
 
 private data class PlaybackStatsSample(
