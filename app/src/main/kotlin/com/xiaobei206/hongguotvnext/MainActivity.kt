@@ -967,6 +967,7 @@ private fun CatalogCardView(
                 if (focused) {
                     scaleX = 1.12f
                     scaleY = 1.12f
+                    transformOrigin = TransformOrigin(0.5f, 0f)
                 }
             }.shadow(if (focused) 7.dp else 0.dp, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp)),
