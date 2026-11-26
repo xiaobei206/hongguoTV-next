@@ -2,12 +2,13 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.17`（图标素材保持 v0.1.15 不变；修复候选版的 Compose 按键 API 编译错误；播放器确认键召出菜单后聚焦播放/暂停，保留旧超时；详情页默认聚焦继续播放，右移按观看历史定位选集；季卡完整显示总集数；待 CI 与实机验收）
+- **版本：** `0.1.18`（应用图标与主页左上角 LOGO 更新为纯黑底、发光果形并保留播放三角；TV banner 暂不修改；继承 v0.1.17 的播放器/详情焦点和季卡排版；待 CI 与实机验收）
 - **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
 ## 重要文件
+- `.github/workflows/publish-v0.1.18.yml`：v0.1.18 正式发布流程。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/MainActivity.kt`：TV 主流程、搜索热搜/日期标签和设备接力回调。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvPlayerScreen.kt`：电视播放器遥控状态机、自动隐藏控制栏与 STATS FOR NERDS 悬浮层；视频 TextureView 缩放/平移与 UI 叠层校准分开。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/DisplayCalibration.kt`：校准参数、四边独立扩展范围以及测试框几何计算。
