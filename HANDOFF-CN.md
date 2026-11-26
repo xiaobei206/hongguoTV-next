@@ -2,15 +2,16 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.18`（应用图标与主页左上角 LOGO 更新为纯黑底、发光果形并保留播放三角；TV banner 暂不修改；继承 v0.1.17 的播放器/详情焦点和季卡排版；待 CI 与实机验收）
+- **版本：** `0.1.19`（圆角控件交互反馈裁剪到自身轮廓；桌面图标果形缩小约 10%；主页使用透明底独立果形 LOGO；TV banner 与播放逻辑不变；待 CI 与实机验收）
 - **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
 ## 重要文件
-- `.github/workflows/publish-v0.1.18.yml`：v0.1.18 正式发布流程。
-- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/MainActivity.kt`：TV 主流程、搜索热搜/日期标签和设备接力回调。
-- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvPlayerScreen.kt`：电视播放器遥控状态机、自动隐藏控制栏与 STATS FOR NERDS 悬浮层；视频 TextureView 缩放/平移与 UI 叠层校准分开。
+- `.github/workflows/publish-v0.1.19.yml`：v0.1.19 正式发布流程；只在 release 标记提交的 Android CI 成功且仍为 main 最新提交时发布。
+- `.github/workflows/publish-v0.1.18.yml`：v0.1.18 历史正式发布流程。
+- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/MainActivity.kt`：TV 主流程、主页透明底 LOGO、圆角交互反馈及搜索/设备接力回调。
+- `app/src/main/kotlin/com/xiaobei206/hongguotvnext/TvPlayerScreen.kt`：播放器控制项圆角交互反馈、遥控状态机、自动隐藏控制栏与诊断悬浮层。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/DisplayCalibration.kt`：校准参数、四边独立扩展范围以及测试框几何计算。
 - `app/src/main/kotlin/com/xiaobei206/hongguotvnext/DisplayCalibrationScreen.kt`：界面/视频的全屏高对比测试图和遥控器校准按钮。
 - `.github/workflows/publish-v0.1.12.yml`：v0.1.12 历史正式发布流程。
@@ -26,6 +27,8 @@
 - `playback/ExoVideo.kt`、`PlaybackDiagnostics.kt`、`PlaybackService.kt`：媒体播放、诊断与 MediaSessionService。
 - `TvHandoffServer.kt`：旧 TV 的 TCP/NSD 接力兼容实现；`TvHandoffProtocolTest.kt` 测试协议编解码。
 - `PhoneDiagnosticClient.kt`：向发现到的开心果手机发送电视诊断报告。
+- `app/src/main/res/drawable-nodpi/tv_icon_launcher.webp`：黑底桌面图标，果形主体按比例缩小。
+- `app/src/main/res/drawable-nodpi/tv_brand_mark.webp`：主页使用的透明底果形 LOGO。
 - `app/build.gradle.kts`：版本、依赖、ABI split 和根目录签名读取。
 - `gradle/libs.versions.toml`：版本目录；Maven 0.4.1 只作非打包配置回退，TV APK 必须使用固定自维护 SDK `1e9334185a46033bcc4e3e30fc41f649958b1389`.
 - `scripts/patch-openhongguo.py`：对固定 SDK 应用结构化诊断扩展。
@@ -44,7 +47,7 @@
 ## 构建与测试现状
 
 - Android 6.0 兼容改动：minSdk=23，启用 Core Library Desugaring 2.1.5；API 23-27 封面解码、JSON 原子替换、NSD resolving 集合均有旧系统实现；CI 检查最终 APK 的 sdkVersion 必须为 23。CI 成功仍不等于 E55A / 75U6900C 真机播放已通过。
-- 当前工程版本为 `0.1.8`，使用独立 applicationId，可与旧版并行安装；minSdk 目标为 API 23。
+- 当前工程版本为 `0.1.19`，使用独立 applicationId，可与旧版并行安装；minSdk 目标为 API 23。
 - [v0.1.2 正式构建](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45389071879) 全部成功：单测、Lint、Debug APK、ABI 检查、正式 Release APK、签名证书验证及 SHA-256。早期基线 [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533) 作为 v0.1.0 历史记录保留。
 - Actions 已将测试与 Lint 分成独立步骤并加入 Gradle 缓存；完整配置可选的四个签名 Secrets 后可走正式签名 Artifact 路径。
 - 开心果的数据模型、Feed、存储、播放/CENC、封面缓存及核心测试已迁移；实际构建结果以 [Actions](https://github.com/xiaobei206/hongguoTV-next/actions) 为准。

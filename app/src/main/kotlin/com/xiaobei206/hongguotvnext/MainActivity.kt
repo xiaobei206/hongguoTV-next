@@ -77,6 +77,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -459,9 +461,9 @@ private fun BrowseScreen(
                 horizontalArrangement = Arrangement.spacedBy(9.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.tv_icon_launcher),
+                    painter = painterResource(id = R.drawable.tv_brand_mark),
                     contentDescription = "红果 TV",
-                    modifier = Modifier.size(52.dp),
+                    modifier = Modifier.size(58.dp),
                     contentScale = ContentScale.Fit
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
@@ -801,6 +803,8 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
                 scaleX = emphasis
                 scaleY = emphasis
             }
+            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .focusable(),
         color = when {
@@ -810,7 +814,7 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
         },
         shape = RoundedCornerShape(10.dp),
         border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
-        shadowElevation = if (focused) 5.dp else 0.dp
+        shadowElevation = 0.dp
     ) {
         Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
             Text(
@@ -842,6 +846,8 @@ private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
                 scaleX = emphasis
                 scaleY = emphasis
             }
+            .shadow(if (focused) 4.dp else 0.dp, RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick).focusable(),
         shape = RoundedCornerShape(20.dp),
         color = when {
@@ -850,7 +856,7 @@ private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
             else -> TvPanel
         },
         border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
-        shadowElevation = if (focused) 4.dp else 0.dp
+        shadowElevation = 0.dp
     ) {
         Box(Modifier.padding(horizontal = 15.dp), contentAlignment = Alignment.Center) {
             Text(
@@ -880,6 +886,8 @@ private fun TvActionButton(
                 scaleX = emphasis
                 scaleY = emphasis
             }
+            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(10.dp))
             .clickable(enabled = enabled, onClick = onClick)
             .focusable(enabled = enabled),
         color = when {
@@ -890,7 +898,7 @@ private fun TvActionButton(
         },
         shape = RoundedCornerShape(10.dp),
         border = if (focused) BorderStroke(1.dp, TvFocusBorder) else BorderStroke(1.dp, TvPanelRaised),
-        shadowElevation = if (focused) 5.dp else 0.dp
+        shadowElevation = 0.dp
     ) {
         Box(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
             Text(
@@ -930,12 +938,14 @@ private fun CatalogCardView(
     Surface(
         modifier = Modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused }
             .focusRequester(requester)
+            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .focusable(),
         color = if (focused) TvPanelRaised else TvPanel,
         shape = RoundedCornerShape(12.dp),
         border = if (focused) BorderStroke(2.dp, TvFocus) else null,
-        shadowElevation = if (focused) 5.dp else 0.dp
+        shadowElevation = 0.dp
     ) {
         Column(Modifier.padding(8.dp)) {
             Box(
@@ -1114,6 +1124,8 @@ private fun DetailScreen(
                         Surface(
                             modifier = Modifier.width(220.dp).height(72.dp)
                                 .onFocusChanged { focused = it.isFocused }
+                                .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .clickable(enabled = season.episodeCount > 0) {
                                     if (!selected) onSelectSeason(season.seriesId)
                                 }
@@ -1125,7 +1137,7 @@ private fun DetailScreen(
                                 else -> TvPanel
                             },
                             border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
-                            shadowElevation = if (focused) 5.dp else 0.dp
+                            shadowElevation = 0.dp
                         ) {
                             Column(
                                 Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
@@ -1195,6 +1207,8 @@ private fun DetailScreen(
                         Surface(
                             modifier = Modifier.height(58.dp).focusRequester(episodeFocusRequester)
                                 .onFocusChanged { focused = it.isFocused }
+                                .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .clickable {
                                     focusedEpisode = episode.number
                                     if (episode.playable) onPlay(seriesId, episode.number, 0.0)
@@ -1207,7 +1221,7 @@ private fun DetailScreen(
                                 else -> TvPanel
                             },
                             border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
-                            shadowElevation = if (focused) 5.dp else 0.dp
+                            shadowElevation = 0.dp
                         ) {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Text(
@@ -1533,12 +1547,14 @@ private fun SettingsActionRow(
                 scaleX = emphasis
                 scaleY = emphasis
             }
+            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .focusable(),
         color = if (focused) focusedColor else TvPanel,
         shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, if (focused) TvAccent else TvPanelRaised),
-        shadowElevation = if (focused) 5.dp else 0.dp
+        shadowElevation = 0.dp
     ) {
         Row(
             Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 10.dp),

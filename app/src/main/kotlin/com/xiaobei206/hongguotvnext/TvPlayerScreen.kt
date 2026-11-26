@@ -50,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -528,6 +529,8 @@ private fun PlayerControlButton(
                 scaleX = emphasis
                 scaleY = emphasis
             }
+            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .focusable(),
         color = when {
@@ -537,7 +540,7 @@ private fun PlayerControlButton(
         },
         shape = RoundedCornerShape(12.dp),
         border = if (focused) BorderStroke(1.dp, Color(0xFFFFD99A)) else BorderStroke(1.dp, PlayerHudControlBorder),
-        shadowElevation = if (focused) 5.dp else 0.dp
+        shadowElevation = 0.dp
     ) {
         Box(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 5.dp), contentAlignment = Alignment.Center) {
             Text(
