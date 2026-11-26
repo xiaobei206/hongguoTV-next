@@ -1,0 +1,100 @@
+name: Publish v0.1.30 formal release
+
+on:
+  workflow_run:
+    workflows: ["Android CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact Android CI source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check whether this commit is the final release marker
+        id: release-marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log -1 --format=%B | grep -Fq 'release: prepare v0.1.30 final'; then
+            echo "matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches=false" >> "$GITHUB_OUTPUT"
+            echo "This successful CI run is not the final v0.1.30 release candidate."
+          fi
+
+      - name: Ensure this is still the latest main commit
+        id: current-head
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          if [[ "$current" == "$TARGET_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale release candidate $TARGET_SHA; main is now $current."
+          fi
+
+      - name: Download signed APK from the successful CI run
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.30-formal-release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.30-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.30-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.30-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.30-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.30-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.30
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: 红果 TV Next v0.1.30
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 红果 TV Next v0.1.30
+
+            ### 为最后一季右边缘增加安全滚动空间
+            - 保留第一季左边缘的修复；季卡 LazyRow 的 start contentPadding 仍为 14dp，end contentPadding 单独增至 28dp，为末端焦点滚动提供额外实际留白。
+            - 使用列表实际 index 识别首尾季：第一季以左侧中点为缩放锚点，最后一季以右侧中点为缩放锚点，中间季继续中心缩放。
+            - 保持 220dp × 72dp 基础卡片、1.0625× 焦点倍率、zIndex、字体、点击/焦点行为、数据与播放逻辑不变。
+            - v0.1.28 中筛选行、主页海报/热搜网格、选集网格和播放器控制条的滚动边界处理保留不变。
+
+            ### 兼容性与验证
+            - 保留 Android 6.0 / API 23 最低兼容目标、Universal APK、自维护 openhongguo AAR 与现有三种 ABI。
+            - Android CI 执行 SDK/应用测试、Lint、APK ABI 与最低 SDK 检查、正式签名和 SHA-256 验证。
+            - CI 通过不等于电视实机最后一季右边缘已验收。
+          files: |
+            dist/hongguoTV-next-v0.1.30-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.30-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.30-release-certificate.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
