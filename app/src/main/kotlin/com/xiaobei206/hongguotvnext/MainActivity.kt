@@ -88,6 +88,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -1242,7 +1243,19 @@ private fun DetailScreen(
                 else -> LazyVerticalGrid(
                     state = episodeGridState,
                     columns = GridCells.Adaptive(minSize = 88.dp),
-                    modifier = Modifier.fillMaxSize(),
+                    // Expand only the lazy viewport by 12dp on each side, then inset its content
+                    // by the same amount. The resulting slot width stays identical to the original
+                    // full-width Adaptive grid while its clipping boundary moves outside edge cards.
+                    modifier = Modifier.fillMaxSize().layout { measurable, constraints ->
+                        val focusBleed = 12.dp.roundToPx()
+                        val expandedWidth = constraints.maxWidth + focusBleed * 2
+                        val placeable = measurable.measure(
+                            constraints.copy(minWidth = expandedWidth, maxWidth = expandedWidth)
+                        )
+                        layout(constraints.maxWidth, placeable.height) {
+                            placeable.place(-focusBleed, 0)
+                        }
+                    },
                     contentPadding = PaddingValues(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)

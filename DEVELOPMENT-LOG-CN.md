@@ -4,7 +4,8 @@
 - 保留焦点文字独立绘制；不再让七类旧控件统一使用 1.08 倍，也不让主页海报继续使用近似的 1.12 倍。
 - 详情页同系列 LazyRow 增加 start/end 14dp、top/bottom 10dp 内容安全空间；选集 LazyVerticalGrid 增加 start/end 12dp、top 10dp，底部维持 24dp。
 - 同系列季卡与选集卡片的外层 Box 根据焦点状态设置 zIndex=1，非焦点为 0，确保焦点项绘制在邻居上方；不关闭全屏 Surface 的屏幕边界裁剪。
-- 保持各控件基础测量尺寸、遥控焦点顺序/点击范围、Adaptive(minSize=88dp) 网格策略、数据/播放回调、Logo 和播放器状态机不变。Android CI 和目标电视上的左/右/上/下边缘实测仍是验收环节。
+- 选集 LazyVerticalGrid 的绘制视口横向各扩展 12dp，再用同额 start/end contentPadding 抵消；网格轨道仍按原始可用宽度计算，避免新增内边距改变 Adaptive 列数或单元格基准宽度。
+- 保持各控件基础测量尺寸、遥控焦点顺序/点击范围、Adaptive(minSize=88dp) 列数规则、数据/播放回调、Logo 和播放器状态机不变。Android CI 和目标电视上的左/右/上/下边缘实测仍是验收环节。
 - versionCode 28 / versionName 0.1.27。
 
 ## 2026-11-26：v0.1.26 主页海报焦点放大试验
