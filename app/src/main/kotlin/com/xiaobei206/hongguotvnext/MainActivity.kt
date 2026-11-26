@@ -803,7 +803,7 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
         contentAlignment = Alignment.CenterStart
     ) {
         // Scale only the button surface. The label is a sibling layer and is measured/drawn
-        // at its final 20sp size, so it does not inherit the 1.08x surface transform.
+        // at its final 18sp size, so it does not inherit the 1.08x surface transform.
         Surface(
             modifier = Modifier.fillMaxSize().graphicsLayer {
                 if (focused) {
@@ -825,7 +825,7 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
             title,
             modifier = Modifier.padding(horizontal = if (focused) 6.dp else 14.dp),
             color = if (focused) Color(0xFF18212B) else TvText,
-            fontSize = if (focused) 20.sp else 17.sp,
+            fontSize = if (focused) 18.sp else 17.sp,
             fontWeight = if (focused) FontWeight.Medium
                 else if (selected) FontWeight.Bold else FontWeight.Medium
         )
