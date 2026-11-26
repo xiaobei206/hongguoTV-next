@@ -2,13 +2,13 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.22`（首页、筛选、设置和播放器按钮取消焦点态整体缩放；金色焦点样式、文字字号/字重与全屏画面校准不变；待 CI 与实机验收）
+- **版本：** `0.1.23`（仅主页左侧导航焦点底板独立放大 1.08 倍；焦点字 20sp / Medium，文字不随底板缩放；其他控件保持 v0.1.22；待 CI 与电视实机验收）
 - **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
 ## 重要文件
-- `.github/workflows/publish-v0.1.22.yml`：v0.1.22 正式发布流程；只在 release 标记提交的 Android CI 成功且仍为 main 最新提交时发布。
+- `.github/workflows/publish-v0.1.23.yml`：v0.1.23 正式发布流程；只在 release 标记提交的 Android CI 成功且仍为 main 最新提交时发布。\n- `.github/workflows/publish-v0.1.22.yml`：v0.1.22 历史正式发布流程。
 - `.github/workflows/publish-v0.1.21.yml`：v0.1.21 历史正式发布流程。
 - `.github/workflows/publish-v0.1.20.yml`：v0.1.20 历史正式发布流程。
 - `.github/workflows/publish-v0.1.19.yml`：v0.1.19 历史正式发布流程。
@@ -50,7 +50,7 @@
 ## 构建与测试现状
 
 - Android 6.0 兼容改动：minSdk=23，启用 Core Library Desugaring 2.1.5；API 23-27 封面解码、JSON 原子替换、NSD resolving 集合均有旧系统实现；CI 检查最终 APK 的 sdkVersion 必须为 23。CI 成功仍不等于 E55A / 75U6900C 真机播放已通过。
-- 当前工程版本为 `0.1.22`，使用独立 applicationId，可与旧版并行安装；minSdk 目标为 API 23。
+- 当前工程版本为 `0.1.23`，versionCode=24；使用独立 applicationId，可与旧版并行安装；minSdk 目标为 API 23。
 - [v0.1.2 正式构建](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45389071879) 全部成功：单测、Lint、Debug APK、ABI 检查、正式 Release APK、签名证书验证及 SHA-256。早期基线 [Actions #20](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45346930533) 作为 v0.1.0 历史记录保留。
 - Actions 已将测试与 Lint 分成独立步骤并加入 Gradle 缓存；完整配置可选的四个签名 Secrets 后可走正式签名 Artifact 路径。
 - 开心果的数据模型、Feed、存储、播放/CENC、封面缓存及核心测试已迁移；实际构建结果以 [Actions](https://github.com/xiaobei206/hongguoTV-next/actions) 为准。

@@ -795,30 +795,40 @@ private fun formatPosition(seconds: Double): String {
 @Composable
 private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
-    Surface(
+    Box(
         modifier = Modifier.fillMaxWidth().height(46.dp)
             .onFocusChanged { focused = it.isFocused }
-            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
-            .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .focusable(),
-        color = when {
-            focused -> TvFocus
-            selected -> TvPanelRaised
-            else -> TvPanel
-        },
-        shape = RoundedCornerShape(10.dp),
-        border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
-        shadowElevation = 0.dp
+        contentAlignment = Alignment.CenterStart
     ) {
-        Box(Modifier.fillMaxSize().padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
-            Text(
-                title,
-                color = if (focused) Color(0xFF18212B) else TvText,
-                fontSize = 17.sp,
-                fontWeight = if (focused || selected) FontWeight.Bold else FontWeight.Medium
-            )
-        }
+        // Scale only the button surface. The label is a sibling layer and is measured/drawn
+        // at its final 20sp size, so it does not inherit the 1.08x surface transform.
+        Surface(
+            modifier = Modifier.fillMaxSize().graphicsLayer {
+                if (focused) {
+                    scaleX = 1.08f
+                    scaleY = 1.08f
+                }
+            }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(10.dp)),
+            color = when {
+                focused -> TvFocus
+                selected -> TvPanelRaised
+                else -> TvPanel
+            },
+            shape = RoundedCornerShape(10.dp),
+            border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
+            shadowElevation = 0.dp
+        ) {}
+        Text(
+            title,
+            modifier = Modifier.padding(horizontal = if (focused) 6.dp else 14.dp),
+            color = if (focused) Color(0xFF18212B) else TvText,
+            fontSize = if (focused) 20.sp else 17.sp,
+            fontWeight = if (focused) FontWeight.Medium
+                else if (selected) FontWeight.Bold else FontWeight.Medium
+        )
     }
 }
 
