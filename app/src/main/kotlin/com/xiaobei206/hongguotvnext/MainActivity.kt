@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -79,9 +80,11 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
@@ -950,21 +953,39 @@ private fun CatalogCardView(
         }
     }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused }
+    Box(
+        modifier = Modifier.fillMaxWidth()
+            .zIndex(if (focused) 1f else 0f)
+            .onFocusChanged { focused = it.isFocused }
             .focusRequester(requester)
-            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .focusable(),
-        color = if (focused) TvPanelRaised else TvPanel,
-        shape = RoundedCornerShape(12.dp),
-        border = if (focused) BorderStroke(2.dp, TvFocus) else null,
-        shadowElevation = 0.dp
+            .focusable()
     ) {
+        // Scale the surface independently; keep poster text sharply rendered.
+        Surface(
+            modifier = Modifier.matchParentSize().graphicsLayer {
+                if (focused) {
+                    scaleX = 1.12f
+                    scaleY = 1.12f
+                }
+            }.shadow(if (focused) 7.dp else 0.dp, RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(12.dp)),
+            color = if (focused) TvPanelRaised else TvPanel,
+            shape = RoundedCornerShape(12.dp),
+            border = if (focused) BorderStroke(2.dp, TvFocus) else null,
+            shadowElevation = 0.dp
+        ) {}
+
         Column(Modifier.padding(8.dp)) {
             Box(
                 Modifier.fillMaxWidth().aspectRatio(2f / 3f)
+                    .graphicsLayer {
+                        if (focused) {
+                            scaleX = 1.12f
+                            scaleY = 1.12f
+                            transformOrigin = TransformOrigin(0.5f, 0f)
+                        }
+                    }
                     .background(Color(0xFF273447), RoundedCornerShape(8.dp))
             ) {
                 if (bitmap != null) {
@@ -998,14 +1019,21 @@ private fun CatalogCardView(
             Spacer(Modifier.height(8.dp))
             Text(
                 card.title.ifBlank { "未命名剧集" },
+                modifier = Modifier.offset(y = if (focused) 27.dp else 0.dp),
                 maxLines = 2,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = if (focused) 18.sp else 16.sp,
+                fontWeight = if (focused) FontWeight.Medium else FontWeight.SemiBold,
                 color = TvText
             )
             if (card.sub.isNotBlank()) {
                 Spacer(Modifier.height(4.dp))
-                Text(card.sub, maxLines = 1, fontSize = 13.sp, color = TvMuted)
+                Text(
+                    card.sub,
+                    modifier = Modifier.offset(y = if (focused) 27.dp else 0.dp),
+                    maxLines = 1,
+                    fontSize = if (focused) 14.sp else 13.sp,
+                    color = TvMuted
+                )
             }
         }
     }
