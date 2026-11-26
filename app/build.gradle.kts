@@ -163,9 +163,6 @@ val generateTransparentSplashIcon by tasks.registering(org.gradle.api.tasks.Exec
     inputs.file(splashIconSource)
     inputs.file(splashIconGenerator)
     outputs.file(generatedSplashIcon)
-    doFirst {
-        generatedSplashIcon.asFile.parentFile.mkdirs()
-    }
     commandLine(
         providers.gradleProperty("pythonExecutable").orElse("python3").get(),
         splashIconGenerator.absolutePath,
