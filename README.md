@@ -1,6 +1,6 @@
 # 红果 TV Next
 
-> 当前开发版本：**v0.1.26**。主页剧集海报增加焦点态独立放大与层级覆盖；非焦点状态、网格占位与其他控件保持不变。
+> 当前开发版本：**v0.1.27**。按字号增幅精确校准八类焦点背景倍率，并修复详情页同系列/选集列表边缘裁剪与焦点层级。
 
 独立的新一代 Android TV 客户端。所有新版开发仅写入本仓库；旧版 [hongguoTV](https://github.com/xiaobei206/hongguoTV) 保持只读，手机/平板项目 [kaixinguo-android](https://github.com/xiaobei206/kaixinguo-android) 是核心架构参考。
 

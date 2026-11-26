@@ -532,8 +532,8 @@ private fun PlayerControlButton(
         Surface(
             modifier = Modifier.matchParentSize().graphicsLayer {
                 if (focused) {
-                    scaleX = 1.08f
-                    scaleY = 1.08f
+                    scaleX = 1.0667f
+                    scaleY = 1.0667f
                 }
             }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(12.dp))
                 .clip(RoundedCornerShape(12.dp)),

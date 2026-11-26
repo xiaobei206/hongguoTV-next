@@ -810,8 +810,8 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
         Surface(
             modifier = Modifier.fillMaxSize().graphicsLayer {
                 if (focused) {
-                    scaleX = 1.08f
-                    scaleY = 1.08f
+                    scaleX = 1.0588f
+                    scaleY = 1.0588f
                 }
             }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
                 .clip(RoundedCornerShape(10.dp)),
@@ -857,8 +857,8 @@ private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
         Surface(
             modifier = Modifier.matchParentSize().graphicsLayer {
                 if (focused) {
-                    scaleX = 1.08f
-                    scaleY = 1.08f
+                    scaleX = 1.0667f
+                    scaleY = 1.0667f
                 }
             }.shadow(if (focused) 4.dp else 0.dp, RoundedCornerShape(20.dp))
                 .clip(RoundedCornerShape(20.dp)),
@@ -903,8 +903,8 @@ private fun TvActionButton(
         Surface(
             modifier = Modifier.matchParentSize().graphicsLayer {
                 if (focused) {
-                    scaleX = 1.08f
-                    scaleY = 1.08f
+                    scaleX = 1.0667f
+                    scaleY = 1.0667f
                 }
             }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
                 .clip(RoundedCornerShape(10.dp)),
@@ -965,8 +965,8 @@ private fun CatalogCardView(
         Surface(
             modifier = Modifier.matchParentSize().graphicsLayer {
                 if (focused) {
-                    scaleX = 1.12f
-                    scaleY = 1.12f
+                    scaleX = 1.125f
+                    scaleY = 1.125f
                     transformOrigin = TransformOrigin(0.5f, 0f)
                 }
             }.shadow(if (focused) 7.dp else 0.dp, RoundedCornerShape(12.dp))
@@ -982,8 +982,8 @@ private fun CatalogCardView(
                 Modifier.fillMaxWidth().aspectRatio(2f / 3f)
                     .graphicsLayer {
                         if (focused) {
-                            scaleX = 1.12f
-                            scaleY = 1.12f
+                            scaleX = 1.125f
+                            scaleY = 1.125f
                             transformOrigin = TransformOrigin(0.5f, 0f)
                         }
                     }
@@ -1159,7 +1159,7 @@ private fun DetailScreen(
                 }
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(end = 12.dp),
+                    contentPadding = PaddingValues(start = 14.dp, top = 10.dp, end = 14.dp, bottom = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(seasons, key = { it.seriesId }) { season ->
@@ -1167,6 +1167,7 @@ private fun DetailScreen(
                         var focused by remember(season.seriesId) { mutableStateOf(false) }
                         Box(
                             modifier = Modifier.width(220.dp).height(72.dp)
+                                .zIndex(if (focused) 1f else 0f)
                                 .onFocusChanged { focused = it.isFocused }
                                 .clickable(enabled = season.episodeCount > 0) {
                                     if (!selected) onSelectSeason(season.seriesId)
@@ -1177,8 +1178,8 @@ private fun DetailScreen(
                             Surface(
                                 modifier = Modifier.matchParentSize().graphicsLayer {
                                     if (focused) {
-                                        scaleX = 1.08f
-                                        scaleY = 1.08f
+                                        scaleX = 1.0625f
+                                        scaleY = 1.0625f
                                     }
                                 }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
                                     .clip(RoundedCornerShape(10.dp)),
@@ -1242,7 +1243,7 @@ private fun DetailScreen(
                     state = episodeGridState,
                     columns = GridCells.Adaptive(minSize = 88.dp),
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 24.dp),
+                    contentPadding = PaddingValues(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -1259,6 +1260,7 @@ private fun DetailScreen(
                         }
                         Box(
                             modifier = Modifier.fillMaxWidth().height(58.dp)
+                                .zIndex(if (focused) 1f else 0f)
                                 .focusRequester(episodeFocusRequester)
                                 .onFocusChanged { focused = it.isFocused }
                                 .clickable {
@@ -1271,8 +1273,8 @@ private fun DetailScreen(
                             Surface(
                                 modifier = Modifier.matchParentSize().graphicsLayer {
                                     if (focused) {
-                                        scaleX = 1.08f
-                                        scaleY = 1.08f
+                                        scaleX = 1.0556f
+                                        scaleY = 1.0556f
                                     }
                                 }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
                                     .clip(RoundedCornerShape(10.dp)),
@@ -1610,8 +1612,8 @@ private fun SettingsActionRow(
         Surface(
             modifier = Modifier.matchParentSize().graphicsLayer {
                 if (focused) {
-                    scaleX = 1.08f
-                    scaleY = 1.08f
+                    scaleX = 1.0476f
+                    scaleY = 1.0476f
                 }
             }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
                 .clip(RoundedCornerShape(10.dp)),

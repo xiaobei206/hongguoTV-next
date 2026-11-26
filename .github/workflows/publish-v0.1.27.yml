@@ -1,0 +1,107 @@
+name: Publish v0.1.27 formal release
+
+on:
+  workflow_run:
+    workflows: ["Android CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact Android CI source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check whether this commit is the final release marker
+        id: release-marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log -1 --format=%B | grep -Fq 'release: prepare v0.1.27 final'; then
+            echo "matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches=false" >> "$GITHUB_OUTPUT"
+            echo "This successful CI run is not the final v0.1.27 release candidate."
+          fi
+
+      - name: Ensure this is still the latest main commit
+        id: current-head
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          if [[ "$current" == "$TARGET_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale release candidate $TARGET_SHA; main is now $current."
+          fi
+
+      - name: Download signed APK from the successful CI run
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.27-formal-release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.27-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.27-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.27-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.27-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.27-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.27
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: 红果 TV Next v0.1.27
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 红果 TV Next v0.1.27
+
+            ### 焦点背景倍率与字号增幅匹配
+            - 主页导航 17→18sp / 背景 1.0588×。
+            - 筛选 Chip、通用操作按钮、播放器按钮 15→16sp / 背景 1.0667×。
+            - 详情季数主标题 16→17sp / 背景 1.0625×；选集数字 18→19sp / 背景 1.0556×。
+            - 设置大按钮标题 21→22sp / 背景 1.0476×。
+            - 主页海报标题 16→18sp / 海报底板与图片 1.125×。
+            - 焦点文字继续独立绘制，不随背景图层变换，保持文字清晰。
+
+            ### 详情页列表边缘裁剪修复
+            - 同系列季数 LazyRow 为左右与上下焦点扩展预留安全空间；季卡获得焦点时提升绘制层级，可覆盖相邻季卡。
+            - 选集 LazyVerticalGrid 为左右与顶部预留空间，底部保留原有 24dp；焦点选集卡片提升绘制层级，可覆盖相邻项。
+            - 不关闭应用屏幕边缘裁剪，不改变控件基础测量尺寸、遥控焦点顺序、点击回调、Adaptive 网格策略或播放逻辑。
+
+            ### 兼容性与验证
+            - 保留 Android 6.0 / API 23 最低兼容目标、Universal APK、自维护 openhongguo AAR 与现有三种 ABI。
+            - Android CI 执行 SDK/应用测试、Lint、APK ABI 与最低 SDK 检查、正式签名和 SHA-256 验证。
+            - CI 成功不等于目标电视的四边焦点显示已经完成实机验收。
+          files: |
+            dist/hongguoTV-next-v0.1.27-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.27-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.27-release-certificate.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
