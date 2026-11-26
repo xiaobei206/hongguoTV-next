@@ -184,21 +184,21 @@ jobs:
             echo "Could not locate the universal debug APK." >&2
             exit 1
           fi
-          output="hongguoTV-next-v0.1.21-universal-test-signed.apk"
+          output="hongguoTV-next-v0.1.22-universal-test-signed.apk"
           cp "$apk" "dist/$output"
-          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.21-test-certificate.txt"
-          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.21-SHA256SUMS.txt)
-          cat "dist/hongguoTV-next-v0.1.21-SHA256SUMS.txt"
-          cat "dist/hongguoTV-next-v0.1.21-test-certificate.txt"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.22-test-certificate.txt"
+          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.22-SHA256SUMS.txt)
+          cat "dist/hongguoTV-next-v0.1.22-SHA256SUMS.txt"
+          cat "dist/hongguoTV-next-v0.1.22-test-certificate.txt"
 
       - name: Upload test APK and checksums
         uses: actions/upload-artifact@v4
         with:
-          name: hongguoTV-next-v0.1.21-test-apk
+          name: hongguoTV-next-v0.1.22-test-apk
           path: |
-            dist/hongguoTV-next-v0.1.21-universal-test-signed.apk
-            dist/hongguoTV-next-v0.1.21-SHA256SUMS.txt
-            dist/hongguoTV-next-v0.1.21-test-certificate.txt
+            dist/hongguoTV-next-v0.1.22-universal-test-signed.apk
+            dist/hongguoTV-next-v0.1.22-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.22-test-certificate.txt
           if-no-files-found: error
           retention-days: 30
 
@@ -281,22 +281,22 @@ jobs:
             echo "Could not locate the universal release APK." >&2
             exit 1
           fi
-          output="hongguoTV-next-v0.1.21-universal-release-signed.apk"
+          output="hongguoTV-next-v0.1.22-universal-release-signed.apk"
           cp "$apk" "dist/$output"
-          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.21-release-certificate.txt"
-          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.21-RELEASE-SHA256SUMS.txt)
-          cat "dist/hongguoTV-next-v0.1.21-RELEASE-SHA256SUMS.txt"
-          cat "dist/hongguoTV-next-v0.1.21-release-certificate.txt"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.22-release-certificate.txt"
+          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.22-RELEASE-SHA256SUMS.txt)
+          cat "dist/hongguoTV-next-v0.1.22-RELEASE-SHA256SUMS.txt"
+          cat "dist/hongguoTV-next-v0.1.22-release-certificate.txt"
 
       - name: Upload formally signed release APK
         if: steps.release-signing.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: hongguoTV-next-v0.1.21-formal-release
+          name: hongguoTV-next-v0.1.22-formal-release
           path: |
-            dist/hongguoTV-next-v0.1.21-universal-release-signed.apk
-            dist/hongguoTV-next-v0.1.21-RELEASE-SHA256SUMS.txt
-            dist/hongguoTV-next-v0.1.21-release-certificate.txt
+            dist/hongguoTV-next-v0.1.22-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.22-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.22-release-certificate.txt
           if-no-files-found: error
           retention-days: 30
 

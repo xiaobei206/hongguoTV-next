@@ -1,0 +1,103 @@
+name: Publish v0.1.22 formal release
+
+on:
+  workflow_run:
+    workflows: ["Android CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact Android CI source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check whether this commit is the final release marker
+        id: release-marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log -1 --format=%B | grep -Fq 'release: prepare v0.1.22 final'; then
+            echo "matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches=false" >> "$GITHUB_OUTPUT"
+            echo "This successful CI run is not the final v0.1.22 release candidate."
+          fi
+
+      - name: Ensure this is still the latest main commit
+        id: current-head
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          if [[ "$current" == "$TARGET_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale release candidate $TARGET_SHA; main is now $current."
+          fi
+
+      - name: Download signed APK from the successful CI run
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.22-formal-release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.22-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.22-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.22-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.22-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.22-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.22
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: 红果 TV Next v0.1.22
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 红果 TV Next v0.1.22
+
+            ### 焦点文字锐度优化
+            - 移除首页导航、筛选按钮、普通操作按钮、设置大按钮和播放器控制按钮在获得焦点时对整个控件进行的 1.025/1.035 倍图层缩放，避免文字随控件一起经过非整数倍变换。
+            - 保留金色焦点填充、深色反色文字、描边、阴影、原有字号/字重、控件尺寸和焦点导航；不改播放逻辑与自动隐藏计时。
+            - 只移除按钮焦点缩放；全屏界面/视频画面校准所需的 graphicsLayer 变换保持不变。
+
+            ### 主页 LOGO 尺寸微调
+            - 保留已确认的透明底原版主页 LOGO 图片，仅将 Compose 显示尺寸从 58dp 放大到 68dp（约增加 17%），让标志更醒目。
+            - 不重绘、不替换图片资源；桌面应用图标、TV banner、右侧文字、侧栏宽度、焦点导航和播放逻辑均不变。
+
+            ### 兼容性与验证
+            - 保留 Android 6.0 / API 23 最低兼容目标、Universal APK、自维护 openhongguo AAR 和现有三种 ABI。
+            - Android CI 会运行 SDK/应用测试、Lint、APK ABI 与最低 SDK 检查、签名和 SHA-256 验证。
+            - CI 通过不等于目标电视的遥控焦点视觉效果和桌面图标裁切已完成实机验收。
+          files: |
+            dist/hongguoTV-next-v0.1.22-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.22-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.22-release-certificate.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

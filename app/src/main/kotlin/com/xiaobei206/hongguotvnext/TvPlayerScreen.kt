@@ -524,11 +524,6 @@ private fun PlayerControlButton(
                 focused = it.isFocused
                 if (it.isFocused) onFocused()
             }
-            .graphicsLayer {
-                val emphasis = if (focused) 1.035f else 1f
-                scaleX = emphasis
-                scaleY = emphasis
-            }
             .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)

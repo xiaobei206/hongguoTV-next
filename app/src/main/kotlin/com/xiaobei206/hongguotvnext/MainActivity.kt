@@ -798,11 +798,6 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
     Surface(
         modifier = Modifier.fillMaxWidth().height(46.dp)
             .onFocusChanged { focused = it.isFocused }
-            .graphicsLayer {
-                val emphasis = if (focused) 1.035f else 1f
-                scaleX = emphasis
-                scaleY = emphasis
-            }
             .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
             .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
@@ -841,11 +836,6 @@ private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.height(40.dp)
             .onFocusChanged { focused = it.isFocused }
-            .graphicsLayer {
-                val emphasis = if (focused) 1.035f else 1f
-                scaleX = emphasis
-                scaleY = emphasis
-            }
             .shadow(if (focused) 4.dp else 0.dp, RoundedCornerShape(20.dp))
             .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick).focusable(),
@@ -881,11 +871,6 @@ private fun TvActionButton(
     Surface(
         modifier = modifier.height(44.dp).widthIn(min = 88.dp)
             .onFocusChanged { focused = it.isFocused }
-            .graphicsLayer {
-                val emphasis = if (focused) 1.035f else 1f
-                scaleX = emphasis
-                scaleY = emphasis
-            }
             .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
             .clip(RoundedCornerShape(10.dp))
             .clickable(enabled = enabled, onClick = onClick)
@@ -1542,11 +1527,6 @@ private fun SettingsActionRow(
     Surface(
         modifier = modifier.height(78.dp)
             .onFocusChanged { focused = it.isFocused }
-            .graphicsLayer {
-                val emphasis = if (focused) 1.025f else 1f
-                scaleX = emphasis
-                scaleY = emphasis
-            }
             .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
             .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
