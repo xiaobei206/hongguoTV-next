@@ -35,6 +35,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -1197,19 +1198,22 @@ private fun DetailScreen(
                     Text("同系列", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TvText)
                     Text("${seasons.size} 季", color = TvMuted, fontSize = 14.sp)
                 }
-                // Keep the first season's repaired left edge, and reserve extra trailing
-                // scroll space so the final season's right edge stays inside the viewport even
-                // when focus scrolling reaches the row's end. Edge detection uses item index.
+                // The row shows only a few seasons at once. Choose the scale anchor from the
+                // currently visible window, not only the first/last item in the full data set:
+                // any card at the right viewport edge must grow inward when focus scrolls it in.
+                val seasonRowState = rememberLazyListState()
+                val visibleSeasonIndices = seasonRowState.layoutInfo.visibleItemsInfo.map { it.index }
                 LazyRow(
+                    state = seasonRowState,
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(start = 14.dp, top = 10.dp, end = 28.dp, bottom = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     itemsIndexed(seasons, key = { _, season -> season.seriesId }) { index, season ->
                         val selected = season.seriesId == seriesId
-                        val focusTransformOrigin = when (index) {
-                            0 -> TransformOrigin(0f, 0.5f)
-                            seasons.lastIndex -> TransformOrigin(1f, 0.5f)
+                        val focusTransformOrigin = when {
+                            index == visibleSeasonIndices.firstOrNull() -> TransformOrigin(0f, 0.5f)
+                            index == visibleSeasonIndices.lastOrNull() -> TransformOrigin(1f, 0.5f)
                             else -> TransformOrigin(0.5f, 0.5f)
                         }
                         var focused by remember(season.seriesId) { mutableStateOf(false) }

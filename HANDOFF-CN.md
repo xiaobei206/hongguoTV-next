@@ -2,13 +2,13 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.30`（保留第一季左边修复，为最后一季增加 28dp 右端安全滚动留白；待 CI 与电视实机复验）
+- **版本：** `0.1.31`（根据 LazyRow 当前可见项动态设置首/末可见季卡缩放锚点；待 CI 与电视实机复验）
 - **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
 ## 重要文件
-- `.github/workflows/publish-v0.1.30.yml`：v0.1.30 正式发布流程；仅在最终发布标记提交对应 CI 成功且仍为 main 最新提交时发布。
+- `.github/workflows/publish-v0.1.31.yml`：v0.1.31 正式发布流程；仅在最终发布标记提交对应 CI 成功且仍为 main 最新提交时发布。
 - `.github/workflows/publish-v0.1.29.yml`：v0.1.29 历史正式发布流程；仅在最终发布标记提交对应 CI 成功且仍为 main 最新提交时发布。
 - `.github/workflows/publish-v0.1.28.yml`：v0.1.28 正式发布流程；只在最终 release 标记提交对应的 Android CI 成功且仍为 main 最新提交时发布。
 - `.github/workflows/publish-v0.1.27.yml`：v0.1.27 正式发布流程；只在最终 release 标记提交对应的 Android CI 成功且仍为 main 最新提交时发布。
