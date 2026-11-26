@@ -80,18 +80,18 @@ jobs:
           generate_release_notes: false
           fail_on_unmatched_files: true
           body: |
-          ## 红果 TV Next v0.1.32
+            ## 红果 TV Next v0.1.32
 
-          ### Android 启动画面改用透明底果子图标
-          - Android 12 及以上的系统启动画面中间图标改用已有的 `tv_brand_mark.webp`，沿用原果子造型和高光质感，通过透明通道显示图形，不再把黑底 `tv_icon_launcher.webp` 用作系统启动页中心图标。
-          - 通过 API 31 专用主题资源设置 `windowSplashScreenAnimatedIcon`；不设置 `windowSplashScreenBackground`，不主动固定系统启动背景颜色。
-          - 不更改桌面/应用启动器图标、主页 LOGO、播放器、数据源或业务逻辑。
+            ### Android 启动画面改用透明底果子图标
+            - Android 12 及以上的系统启动画面中间图标改用已有的 `tv_brand_mark.webp`，沿用原果子造型和高光质感，通过透明通道显示图形，不再把黑底 `tv_icon_launcher.webp` 用作系统启动页中心图标。
+            - 通过 API 31 专用主题资源设置 `windowSplashScreenAnimatedIcon`；不设置 `windowSplashScreenBackground`，不主动固定系统启动背景颜色。
+            - 不更改桌面/应用启动器图标、主页 LOGO、播放器、数据源或业务逻辑。
 
-          ### 兼容性与验证
-          - 保留 Android 6.0 / API 23 最低兼容目标、Universal APK、自维护 openhongguo AAR 与现有三种 ABI。
-          - Android CI 执行 SDK/应用测试、Lint、APK ABI 与最低 SDK 检查、正式签名和 SHA-256 验证。
-          - CI 通过表示构建门禁通过；最终启动背景和图标观感仍以用户模拟器/电视实测为准。
-        files: |
+            ### 兼容性与验证
+            - 保留 Android 6.0 / API 23 最低兼容目标、Universal APK、自维护 openhongguo AAR 与现有三种 ABI。
+            - Android CI 执行 SDK/应用测试、Lint、APK ABI 与最低 SDK 检查、正式签名和 SHA-256 验证。
+            - CI 通过表示构建门禁通过；最终启动背景和图标观感仍以用户模拟器/电视实测为准。
+          files: |
             dist/hongguoTV-next-v0.1.32-universal-release-signed.apk
             dist/hongguoTV-next-v0.1.32-RELEASE-SHA256SUMS.txt
             dist/hongguoTV-next-v0.1.32-release-certificate.txt
