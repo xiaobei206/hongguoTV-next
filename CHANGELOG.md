@@ -1,3 +1,9 @@
+## v0.1.33 — 启动图标只去黑底，保持原始画布
+- 修正 v0.1.32 使用 128×128 紧凑透明图导致启动页果子视觉尺寸偏大、清晰度下降的问题。
+- 从原来的 256×256 `tv_icon_launcher.webp` 生成启动专用透明 PNG，只透明化与画布边缘连通的近黑色背景像素；不缩放、不裁边、不重画，保留原果子在完整画布中的位置与比例。
+- 仅 Android 12+ 系统启动页中心图标改用新资源；桌面/启动器图标、主页 LOGO 和系统启动背景策略不变。
+- versionCode 34 / versionName 0.1.33。CI 成功后仍需在目标模拟器/电视确认实际显示。
+
 ## v0.1.32 — 启动画面使用透明底果子图标
 - Android 12 及以上系统启动画面中间图标改用现有透明底 `tv_brand_mark.webp`，避免黑底 `tv_icon_launcher.webp` 在浅色系统启动画面中形成突兀方块。
 - 使用 API 31 专用主题资源设置 `windowSplashScreenAnimatedIcon`，不指定 `windowSplashScreenBackground`，不更改应用启动器图标或主页 LOGO。

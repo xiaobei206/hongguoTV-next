@@ -19,6 +19,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Set up Python for splash asset processing
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install Pillow for transparent splash asset
+        run: python -m pip install --disable-pip-version-check Pillow
+
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -184,21 +192,21 @@ jobs:
             echo "Could not locate the universal debug APK." >&2
             exit 1
           fi
-          output="hongguoTV-next-v0.1.32-universal-test-signed.apk"
+          output="hongguoTV-next-v0.1.33-universal-test-signed.apk"
           cp "$apk" "dist/$output"
-          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.32-test-certificate.txt"
-          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.32-SHA256SUMS.txt)
-          cat "dist/hongguoTV-next-v0.1.32-SHA256SUMS.txt"
-          cat "dist/hongguoTV-next-v0.1.32-test-certificate.txt"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.33-test-certificate.txt"
+          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.33-SHA256SUMS.txt)
+          cat "dist/hongguoTV-next-v0.1.33-SHA256SUMS.txt"
+          cat "dist/hongguoTV-next-v0.1.33-test-certificate.txt"
 
       - name: Upload test APK and checksums
         uses: actions/upload-artifact@v4
         with:
-          name: hongguoTV-next-v0.1.32-test-apk
+          name: hongguoTV-next-v0.1.33-test-apk
           path: |
-            dist/hongguoTV-next-v0.1.32-universal-test-signed.apk
-            dist/hongguoTV-next-v0.1.32-SHA256SUMS.txt
-            dist/hongguoTV-next-v0.1.32-test-certificate.txt
+            dist/hongguoTV-next-v0.1.33-universal-test-signed.apk
+            dist/hongguoTV-next-v0.1.33-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.33-test-certificate.txt
           if-no-files-found: error
           retention-days: 30
 
@@ -281,22 +289,22 @@ jobs:
             echo "Could not locate the universal release APK." >&2
             exit 1
           fi
-          output="hongguoTV-next-v0.1.32-universal-release-signed.apk"
+          output="hongguoTV-next-v0.1.33-universal-release-signed.apk"
           cp "$apk" "dist/$output"
-          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.32-release-certificate.txt"
-          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.32-RELEASE-SHA256SUMS.txt)
-          cat "dist/hongguoTV-next-v0.1.32-RELEASE-SHA256SUMS.txt"
-          cat "dist/hongguoTV-next-v0.1.32-release-certificate.txt"
+          "$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs "dist/$output" > "dist/hongguoTV-next-v0.1.33-release-certificate.txt"
+          (cd dist && sha256sum "$output" > hongguoTV-next-v0.1.33-RELEASE-SHA256SUMS.txt)
+          cat "dist/hongguoTV-next-v0.1.33-RELEASE-SHA256SUMS.txt"
+          cat "dist/hongguoTV-next-v0.1.33-release-certificate.txt"
 
       - name: Upload formally signed release APK
         if: steps.release-signing.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: hongguoTV-next-v0.1.32-formal-release
+          name: hongguoTV-next-v0.1.33-formal-release
           path: |
-            dist/hongguoTV-next-v0.1.32-universal-release-signed.apk
-            dist/hongguoTV-next-v0.1.32-RELEASE-SHA256SUMS.txt
-            dist/hongguoTV-next-v0.1.32-release-certificate.txt
+            dist/hongguoTV-next-v0.1.33-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.33-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.33-release-certificate.txt
           if-no-files-found: error
           retention-days: 30
 

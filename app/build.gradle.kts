@@ -85,8 +85,8 @@ android {
         // API 23 keeps one installable build for Android 6.0-era TVs.
         minSdk = 23
         targetSdk = 36
-        versionCode = 33
-        versionName = "0.1.32"
+        versionCode = 34
+        versionName = "0.1.33"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -147,6 +147,34 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+}
+
+
+/*
+ * Generate a transparent splash-screen variant from the existing full-size launcher artwork.
+ * The script removes only border-connected near-black background pixels and does not resize/crop.
+ */
+val splashIconSource = layout.projectDirectory.file("src/main/res/drawable-nodpi/tv_icon_launcher.webp")
+val splashIconGenerator = rootProject.file("scripts/create-transparent-splash-icon.py")
+val generatedSplashResDir = layout.buildDirectory.dir("generated/splash-icon/res")
+val generatedSplashIcon = generatedSplashResDir.map { it.file("drawable-nodpi/tv_splash_icon.png") }
+val generateTransparentSplashIcon by tasks.registering(org.gradle.api.tasks.Exec::class) {
+    inputs.file(splashIconSource)
+    inputs.file(splashIconGenerator)
+    outputs.file(generatedSplashIcon)
+    doFirst {
+        generatedSplashIcon.get().asFile.parentFile.mkdirs()
+    }
+    commandLine(
+        providers.gradleProperty("pythonExecutable").orElse("python3").get(),
+        splashIconGenerator.absolutePath,
+        splashIconSource.asFile.absolutePath,
+        generatedSplashIcon.get().asFile.absolutePath
+    )
+}
+android.sourceSets.getByName("main").res.srcDir(generatedSplashResDir)
+tasks.named("preBuild").configure {
+    dependsOn(generateTransparentSplashIcon)
 }
 
 dependencies {

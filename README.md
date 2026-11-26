@@ -1,6 +1,6 @@
 # 红果 TV Next
 
-> 当前开发版本：**v0.1.32**。Android 12 及以上系统启动画面使用透明底果子图标，不强制设置系统启动背景色。
+> 当前开发版本：**v0.1.33**。系统启动页从原 256×256 启动图生成透明背景副本，只移除黑底，保留原画布比例与果子位置。
 
 独立的新一代 Android TV 客户端。所有新版开发仅写入本仓库；旧版 [hongguoTV](https://github.com/xiaobei206/hongguoTV) 保持只读，手机/平板项目 [kaixinguo-android](https://github.com/xiaobei206/kaixinguo-android) 是核心架构参考。
 
@@ -23,7 +23,7 @@
 
 ## 当前验证状态
 
-当前开发版本为 v0.1.32。Android 12 及以上通过 API 31 专用主题资源，把系统启动画面中间图标切换为现有透明底果子资源 tv_brand_mark.webp；不更改桌面/应用启动器图标或主页 LOGO，也不指定 windowSplashScreenBackground。启动背景与最终显示效果仍需在目标模拟器/电视上确认。
+当前开发版本为 v0.1.33。系统启动页使用从原始 tv_icon_launcher.webp 生成的 tv_splash_icon.png：保留原图完整画布与果子位置，只将边缘连通的近黑色背景变透明，不缩放、不裁边、不重画。原始应用启动器图标和主页 LOGO 不变。Gradle 会在 preBuild 前生成该资源；需要 Python 3 和 Pillow（安装命令：python3 -m pip install Pillow）。启动效果仍需在目标模拟器/电视确认。
 
 v0.1.3 的播放空响应修复已通过 Android CI 并正式发布；SDK 空响应回退的目标电视实播仍需在设备上验证。不能把 CI 构建成功等同于特定电视的硬件解码或播放成功。
 
@@ -37,7 +37,7 @@ v0.1.0 的正式签名 APK SHA-256：`11145b0b612765dfaef40b57e191d54a6342307105
 
 ## 构建
 
-需先编译固定版本的自维护 SDK。CI 按相同顺序执行；APK 打包不允许不带该 AAR。
+需先编译固定版本的自维护 SDK。CI 按相同顺序执行；APK 打包不允许不带该 AAR。构建前需配置 Python 3 与 Pillow，Gradle 会自动生成启动页透明图标（不修改原始启动器图）。
 
 ```bash
 mkdir -p .build

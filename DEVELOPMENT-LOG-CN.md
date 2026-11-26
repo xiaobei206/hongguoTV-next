@@ -1,3 +1,9 @@
+## 2026-11-26：v0.1.33 修正启动页果子尺寸与清晰度
+- 用户指出 v0.1.32 用现成的 128×128 紧凑透明图后，系统启动页果子被放大、变糊且视觉上超出原来舒服的留白。这是资源选择错误，不应通过重画或改 Logo 造型处理。
+- 改为从原始 256×256 `tv_icon_launcher.webp` 生成启动专用 PNG，输出 canvas 仍是 256×256；通过从画布边界进行 flood-fill，只将与边界相通的近黑/低彩度背景像素改为 alpha=0。不会缩放、裁剪或重绘，未连通的黑色播放符号细节保留。
+- Gradle 在 `preBuild` 前自动生成资源到 `app/build/generated`，不改写原始启动器图标文件。CI 配置 Python/Pillow 后执行同一流程；主题只引用新生成的 `tv_splash_icon`。
+- versionCode 34 / versionName 0.1.33；构建与启动页视觉效果以新 CI 和模拟器/电视验收为准。
+
 ## 2026-11-26：v0.1.32 启动画面透明底果子图标
 - 用户反馈系统全屏启动画面在模拟器上为白色，而此前使用的启动图标带黑色方形底板。检查发现仓库已有透明底果子资源 `app/src/main/res/drawable-nodpi/tv_brand_mark.webp`，因此复用现有原图，避免重新绘制或改变果子造型。
 - Manifest 改用独立的 `Theme.HongguoTvNext.Launch`。基础资源仅继承现有主题；在 `values-v31/styles.xml` 中单独设置 `android:windowSplashScreenAnimatedIcon`，不指定 `windowSplashScreenBackground`，让系统沿用其启动背景选择。

@@ -2,6 +2,6 @@
 <resources>
     <!-- Override only the splash icon; leave the system/theme-selected launch background alone. -->
     <style name="Theme.HongguoTvNext.Launch" parent="@style/Theme.HongguoTvNext">
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/tv_brand_mark</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/tv_splash_icon</item>
     </style>
 </resources>
