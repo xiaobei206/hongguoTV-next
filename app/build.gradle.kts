@@ -156,23 +156,23 @@ android {
  */
 val splashIconSource = layout.projectDirectory.file("src/main/res/drawable-nodpi/tv_icon_launcher.webp")
 val splashIconGenerator = rootProject.file("scripts/create-transparent-splash-icon.py")
-val generatedSplashResDir = layout.buildDirectory.dir("generated/splash-icon/res")
-val generatedSplashIcon = generatedSplashResDir.map { it.file("drawable-nodpi/tv_splash_icon.png") }
+// Write the generated copy into the existing resource source set so AGP 9 can
+// discover it normally; the original launcher image is never overwritten.
+val generatedSplashIcon = layout.projectDirectory.file("src/main/res/drawable-nodpi/tv_splash_icon.png")
 val generateTransparentSplashIcon by tasks.registering(org.gradle.api.tasks.Exec::class) {
     inputs.file(splashIconSource)
     inputs.file(splashIconGenerator)
     outputs.file(generatedSplashIcon)
     doFirst {
-        generatedSplashIcon.get().asFile.parentFile.mkdirs()
+        generatedSplashIcon.asFile.parentFile.mkdirs()
     }
     commandLine(
         providers.gradleProperty("pythonExecutable").orElse("python3").get(),
         splashIconGenerator.absolutePath,
         splashIconSource.asFile.absolutePath,
-        generatedSplashIcon.get().asFile.absolutePath
+        generatedSplashIcon.asFile.absolutePath
     )
 }
-android.sourceSets.getByName("main").res.srcDir(generatedSplashResDir)
 tasks.named("preBuild").configure {
     dependsOn(generateTransparentSplashIcon)
 }
