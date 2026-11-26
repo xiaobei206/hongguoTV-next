@@ -7,4 +7,6 @@
         <item name="android:windowBackground">#090D14</item>
         <item name="android:colorAccent">#A8E063</item>
     </style>
+    <!-- Base launch theme; API 31+ adds the transparent splash icon in values-v31. -->
+    <style name="Theme.HongguoTvNext.Launch" parent="@style/Theme.HongguoTvNext" />
 </resources>

@@ -1,0 +1,99 @@
+name: Publish v0.1.32 formal release
+
+on:
+  workflow_run:
+    workflows: ["Android CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact Android CI source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check whether this commit is the final release marker
+        id: release-marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log -1 --format=%B | grep -Fq 'release: prepare v0.1.32 final'; then
+            echo "matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches=false" >> "$GITHUB_OUTPUT"
+            echo "This successful CI run is not the final v0.1.32 release candidate."
+          fi
+
+      - name: Ensure this is still the latest main commit
+        id: current-head
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          if [[ "$current" == "$TARGET_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale release candidate $TARGET_SHA; main is now $current."
+          fi
+
+      - name: Download signed APK from the successful CI run
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.32-formal-release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.32-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.32-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.32-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.32-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.32-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.32
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: 红果 TV Next v0.1.32
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+          ## 红果 TV Next v0.1.32
+
+          ### Android 启动画面改用透明底果子图标
+          - Android 12 及以上的系统启动画面中间图标改用已有的 `tv_brand_mark.webp`，沿用原果子造型和高光质感，通过透明通道显示图形，不再把黑底 `tv_icon_launcher.webp` 用作系统启动页中心图标。
+          - 通过 API 31 专用主题资源设置 `windowSplashScreenAnimatedIcon`；不设置 `windowSplashScreenBackground`，不主动固定系统启动背景颜色。
+          - 不更改桌面/应用启动器图标、主页 LOGO、播放器、数据源或业务逻辑。
+
+          ### 兼容性与验证
+          - 保留 Android 6.0 / API 23 最低兼容目标、Universal APK、自维护 openhongguo AAR 与现有三种 ABI。
+          - Android CI 执行 SDK/应用测试、Lint、APK ABI 与最低 SDK 检查、正式签名和 SHA-256 验证。
+          - CI 通过表示构建门禁通过；最终启动背景和图标观感仍以用户模拟器/电视实测为准。
+        files: |
+            dist/hongguoTV-next-v0.1.32-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.32-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.32-release-certificate.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

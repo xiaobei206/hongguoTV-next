@@ -1,3 +1,8 @@
+## 2026-11-26：v0.1.32 启动画面透明底果子图标
+- 用户反馈系统全屏启动画面在模拟器上为白色，而此前使用的启动图标带黑色方形底板。检查发现仓库已有透明底果子资源 `app/src/main/res/drawable-nodpi/tv_brand_mark.webp`，因此复用现有原图，避免重新绘制或改变果子造型。
+- Manifest 改用独立的 `Theme.HongguoTvNext.Launch`。基础资源仅继承现有主题；在 `values-v31/styles.xml` 中单独设置 `android:windowSplashScreenAnimatedIcon`，不指定 `windowSplashScreenBackground`，让系统沿用其启动背景选择。
+- 保持 `tv_icon_launcher.webp`、主页 LOGO、播放器和业务代码不变。版本提升至 versionCode 33 / versionName 0.1.32；最终 CI、签名和发布结果待工作流验证。
+
 ## 2026-11-26：v0.1.31 按季卡可视窗口动态处理左右边缘
 
 - 用户明确定位到根因场景：一行只能显示约 3 张季卡，导航到第 4 季时列表开始滚动，右侧立刻裁切；因此不是只针对整个数据集的最后一季。

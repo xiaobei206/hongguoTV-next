@@ -20,7 +20,7 @@
         android:icon="@drawable/tv_icon_launcher"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
-        android:theme="@style/Theme.HongguoTvNext">
+        android:theme="@style/Theme.HongguoTvNext.Launch">
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
