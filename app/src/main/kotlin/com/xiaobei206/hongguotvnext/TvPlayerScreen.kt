@@ -426,7 +426,10 @@ internal fun TvPlayerScreen(model: AppModel, exo: ExoPlayer, onBack: () -> Unit,
                     }
 
                     Row(
-                        Modifier.fillMaxWidth().focusGroup().horizontalScroll(rememberScrollState()),
+                        Modifier.fillMaxWidth().focusGroup()
+                            .focusOverflowViewport(horizontalBleed = 12.dp, verticalBleed = 4.dp)
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {

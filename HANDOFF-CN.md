@@ -2,12 +2,13 @@
 
 - **仓库：** https://github.com/xiaobei206/hongguoTV-next
 - **主分支：** `main`
-- **版本：** `0.1.27`（八类焦点背景倍率按字号增幅校准；详情页季数/选集列表补足边缘安全空间并提升焦点层级；待 CI 与电视实机复验）
+- **版本：** `0.1.28`（扩展滚动焦点视口并补偿内容留白，修复筛选行、详情季卡、主页网格及播放器控制首尾裁切；待 CI 与电视实机复验）
 - **兼容策略：** 一个代码库、一个 Universal APK；当前目标 minSdk API 23，不预先拆分 Legacy / Standard。v0.1.4 是此前正式发布版本。
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
 ## 重要文件
+- `.github/workflows/publish-v0.1.28.yml`：v0.1.28 正式发布流程；只在最终 release 标记提交对应的 Android CI 成功且仍为 main 最新提交时发布。
 - `.github/workflows/publish-v0.1.27.yml`：v0.1.27 正式发布流程；只在最终 release 标记提交对应的 Android CI 成功且仍为 main 最新提交时发布。
 - `.github/workflows/publish-v0.1.26.yml`：v0.1.26 正式发布流程；只在 release 标记提交的 Android CI 成功且仍为 main 最新提交时发布。
 - `.github/workflows/publish-v0.1.25.yml`：v0.1.25 历史正式发布流程。

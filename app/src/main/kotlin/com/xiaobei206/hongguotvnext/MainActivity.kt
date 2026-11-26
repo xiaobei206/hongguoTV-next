@@ -93,6 +93,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -125,6 +126,37 @@ private val TvFocus = Color(0xFFF0B65A)
 private val TvFocusBorder = Color(0xFFFFF3DD)
 private val TvText = Color(0xFFF4F1E9)
 private val TvMuted = Color(0xFFA7B0BA)
+
+/**
+ * Expands a scroll container's own clipping viewport while preserving the size reported to its
+ * parent. Pair it with equal inner content padding so first/last focused items can draw past the
+ * original viewport edge without changing their ordinary layout positions or Adaptive grid tracks.
+ */
+internal fun Modifier.focusOverflowViewport(
+    horizontalBleed: Dp,
+    verticalBleed: Dp = 0.dp
+): Modifier = layout { measurable, constraints ->
+    val bleedX = horizontalBleed.roundToPx().coerceAtLeast(0)
+    val bleedY = verticalBleed.roundToPx().coerceAtLeast(0)
+    val boundedWidth = constraints.hasBoundedWidth
+    val boundedHeight = constraints.hasBoundedHeight
+    val parentWidth = constraints.maxWidth
+    val expandedWidth = if (boundedWidth) parentWidth + bleedX * 2 else constraints.maxWidth
+    val expandedMaxHeight = if (boundedHeight) constraints.maxHeight + bleedY * 2 else constraints.maxHeight
+    val placeable = measurable.measure(
+        constraints.copy(
+            minWidth = if (boundedWidth) expandedWidth else constraints.minWidth,
+            maxWidth = expandedWidth,
+            minHeight = 0,
+            maxHeight = expandedMaxHeight
+        )
+    )
+    val reportedWidth = if (boundedWidth) parentWidth else (placeable.width - bleedX * 2).coerceAtLeast(0)
+    val reportedHeight = (placeable.height - bleedY * 2).coerceAtLeast(0)
+    layout(constraints.constrainWidth(reportedWidth), constraints.constrainHeight(reportedHeight)) {
+        placeable.place(-bleedX, -bleedY)
+    }
+}
 
 private enum class TvTab(val title: String) {
     RECOMMEND("推荐"),
@@ -669,8 +701,8 @@ private fun BrowseScreen(
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 160.dp),
                         state = gridState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 30.dp, end = 8.dp),
+                        modifier = Modifier.fillMaxSize().focusOverflowViewport(horizontalBleed = 16.dp),
+                        contentPadding = PaddingValues(start = 16.dp, bottom = 30.dp, end = 24.dp),
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalArrangement = Arrangement.spacedBy(15.dp)
                     ) {
@@ -735,8 +767,8 @@ private fun BrowseScreen(
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 160.dp),
                         state = gridState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 30.dp, end = 8.dp),
+                        modifier = Modifier.fillMaxSize().focusOverflowViewport(horizontalBleed = 16.dp),
+                        contentPadding = PaddingValues(start = 16.dp, bottom = 30.dp, end = 24.dp),
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalArrangement = Arrangement.spacedBy(15.dp)
                     ) {
@@ -839,7 +871,10 @@ private fun NavigationItem(title: String, selected: Boolean, onClick: () -> Unit
 @Composable
 private fun FilterRow(content: @Composable () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        Modifier.fillMaxWidth()
+            .focusOverflowViewport(horizontalBleed = 10.dp, verticalBleed = 3.dp)
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 10.dp, vertical = 3.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) { content() }
 }
@@ -1159,8 +1194,8 @@ private fun DetailScreen(
                     Text("${seasons.size} 季", color = TvMuted, fontSize = 14.sp)
                 }
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(start = 14.dp, top = 10.dp, end = 14.dp, bottom = 10.dp),
+                    modifier = Modifier.fillMaxWidth().focusOverflowViewport(horizontalBleed = 12.dp),
+                    contentPadding = PaddingValues(start = 26.dp, top = 10.dp, end = 26.dp, bottom = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(seasons, key = { it.seriesId }) { season ->
@@ -1243,19 +1278,9 @@ private fun DetailScreen(
                 else -> LazyVerticalGrid(
                     state = episodeGridState,
                     columns = GridCells.Adaptive(minSize = 88.dp),
-                    // Expand only the lazy viewport by 12dp on each side, then inset its content
-                    // by the same amount. The resulting slot width stays identical to the original
-                    // full-width Adaptive grid while its clipping boundary moves outside edge cards.
-                    modifier = Modifier.fillMaxSize().layout { measurable, constraints ->
-                        val focusBleed = 12.dp.roundToPx()
-                        val expandedWidth = constraints.maxWidth + focusBleed * 2
-                        val placeable = measurable.measure(
-                            constraints.copy(minWidth = expandedWidth, maxWidth = expandedWidth)
-                        )
-                        layout(constraints.maxWidth, placeable.height) {
-                            placeable.place(-focusBleed, 0)
-                        }
-                    },
+                    // Keep the Adaptive grid's original track width while moving its clipping viewport
+                    // 12dp beyond both outer edges; matching contentPadding cancels the expansion.
+                    modifier = Modifier.fillMaxSize().focusOverflowViewport(horizontalBleed = 12.dp),
                     contentPadding = PaddingValues(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
