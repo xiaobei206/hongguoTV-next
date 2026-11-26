@@ -153,7 +153,10 @@ internal fun Modifier.focusOverflowViewport(
     )
     val reportedWidth = if (boundedWidth) parentWidth else (placeable.width - bleedX * 2).coerceAtLeast(0)
     val reportedHeight = (placeable.height - bleedY * 2).coerceAtLeast(0)
-    layout(constraints.constrainWidth(reportedWidth), constraints.constrainHeight(reportedHeight)) {
+    layout(
+        reportedWidth.coerceIn(constraints.minWidth, constraints.maxWidth),
+        reportedHeight.coerceIn(constraints.minHeight, constraints.maxHeight)
+    ) {
         placeable.place(-bleedX, -bleedY)
     }
 }
