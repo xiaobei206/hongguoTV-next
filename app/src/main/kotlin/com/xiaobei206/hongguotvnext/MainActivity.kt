@@ -843,27 +843,38 @@ private fun FilterRow(content: @Composable () -> Unit) {
 @Composable
 private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
-    Surface(
+    Box(
         modifier = Modifier.height(40.dp)
             .onFocusChanged { focused = it.isFocused }
-            .shadow(if (focused) 4.dp else 0.dp, RoundedCornerShape(20.dp))
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick).focusable(),
-        shape = RoundedCornerShape(20.dp),
-        color = when {
-            focused -> TvFocus
-            selected -> TvPanelRaised
-            else -> TvPanel
-        },
-        border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
-        shadowElevation = 0.dp
+            .clickable(onClick = onClick)
+            .focusable(),
+        contentAlignment = Alignment.Center
     ) {
+        // Keep the enlarged focus surface independent from the text layer.
+        Surface(
+            modifier = Modifier.matchParentSize().graphicsLayer {
+                if (focused) {
+                    scaleX = 1.08f
+                    scaleY = 1.08f
+                }
+            }.shadow(if (focused) 4.dp else 0.dp, RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(20.dp)),
+            shape = RoundedCornerShape(20.dp),
+            color = when {
+                focused -> TvFocus
+                selected -> TvPanelRaised
+                else -> TvPanel
+            },
+            border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
+            shadowElevation = 0.dp
+        ) {}
         Box(Modifier.padding(horizontal = 15.dp), contentAlignment = Alignment.Center) {
             Text(
                 label,
                 color = if (focused) Color(0xFF18212B) else TvText,
-                fontSize = 15.sp,
-                fontWeight = if (focused || selected) FontWeight.Bold else FontWeight.Medium
+                fontSize = if (focused) 16.sp else 15.sp,
+                fontWeight = if (focused) FontWeight.Medium
+                    else if (selected) FontWeight.Bold else FontWeight.Medium
             )
         }
     }
@@ -878,23 +889,32 @@ private fun TvActionButton(
     prominent: Boolean = false
 ) {
     var focused by remember { mutableStateOf(false) }
-    Surface(
+    Box(
         modifier = modifier.height(44.dp).widthIn(min = 88.dp)
             .onFocusChanged { focused = it.isFocused }
-            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
-            .clip(RoundedCornerShape(10.dp))
             .clickable(enabled = enabled, onClick = onClick)
             .focusable(enabled = enabled),
-        color = when {
-            !enabled -> Color(0xFF202831)
-            focused -> TvFocus
-            prominent -> TvPanelRaised
-            else -> TvPanel
-        },
-        shape = RoundedCornerShape(10.dp),
-        border = if (focused) BorderStroke(1.dp, TvFocusBorder) else BorderStroke(1.dp, TvPanelRaised),
-        shadowElevation = 0.dp
+        contentAlignment = Alignment.Center
     ) {
+        // The button surface grows visually; its layout and hit target stay unchanged.
+        Surface(
+            modifier = Modifier.matchParentSize().graphicsLayer {
+                if (focused) {
+                    scaleX = 1.08f
+                    scaleY = 1.08f
+                }
+            }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(10.dp)),
+            color = when {
+                !enabled -> Color(0xFF202831)
+                focused -> TvFocus
+                prominent -> TvPanelRaised
+                else -> TvPanel
+            },
+            shape = RoundedCornerShape(10.dp),
+            border = if (focused) BorderStroke(1.dp, TvFocusBorder) else BorderStroke(1.dp, TvPanelRaised),
+            shadowElevation = 0.dp
+        ) {}
         Box(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
             Text(
                 label,
@@ -903,8 +923,8 @@ private fun TvActionButton(
                     focused -> Color(0xFF18212B)
                     else -> TvText
                 },
-                fontSize = 15.sp,
-                fontWeight = if (focused) FontWeight.ExtraBold else FontWeight.SemiBold,
+                fontSize = if (focused) 16.sp else 15.sp,
+                fontWeight = if (focused) FontWeight.Medium else FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -1116,24 +1136,32 @@ private fun DetailScreen(
                     items(seasons, key = { it.seriesId }) { season ->
                         val selected = season.seriesId == seriesId
                         var focused by remember(season.seriesId) { mutableStateOf(false) }
-                        Surface(
+                        Box(
                             modifier = Modifier.width(220.dp).height(72.dp)
                                 .onFocusChanged { focused = it.isFocused }
-                                .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
-                                .clip(RoundedCornerShape(10.dp))
                                 .clickable(enabled = season.episodeCount > 0) {
                                     if (!selected) onSelectSeason(season.seriesId)
                                 }
                                 .focusable(enabled = season.episodeCount > 0),
-                            shape = RoundedCornerShape(10.dp),
-                            color = when {
-                                focused -> TvFocus
-                                selected -> TvPanelRaised
-                                else -> TvPanel
-                            },
-                            border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
-                            shadowElevation = 0.dp
+                            contentAlignment = Alignment.Center
                         ) {
+                            Surface(
+                                modifier = Modifier.matchParentSize().graphicsLayer {
+                                    if (focused) {
+                                        scaleX = 1.08f
+                                        scaleY = 1.08f
+                                    }
+                                }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+                                    .clip(RoundedCornerShape(10.dp)),
+                                shape = RoundedCornerShape(10.dp),
+                                color = when {
+                                    focused -> TvFocus
+                                    selected -> TvPanelRaised
+                                    else -> TvPanel
+                                },
+                                border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
+                                shadowElevation = 0.dp
+                            ) {}
                             Column(
                                 Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
@@ -1146,16 +1174,16 @@ private fun DetailScreen(
                                     Text(
                                         seasonLabel(season),
                                         modifier = Modifier.weight(1f).padding(end = 6.dp),
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
+                                        fontSize = if (focused) 17.sp else 16.sp,
+                                        fontWeight = if (focused) FontWeight.Medium else FontWeight.Bold,
                                         color = if (focused) Color(0xFF18212B) else TvText,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
                                         if (season.episodeCount > 0) "共${season.episodeCount}集" else "未更新",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = if (focused) 12.sp else 11.sp,
+                                        fontWeight = if (focused) FontWeight.Medium else FontWeight.SemiBold,
                                         color = if (focused) Color(0xFF26313B) else TvMuted,
                                         maxLines = 1,
                                         softWrap = false
@@ -1163,7 +1191,8 @@ private fun DetailScreen(
                                 }
                                 Text(
                                     season.title,
-                                    fontSize = 12.sp,
+                                    fontSize = if (focused) 13.sp else 12.sp,
+                                    fontWeight = if (focused) FontWeight.Medium else FontWeight.Normal,
                                     color = if (focused) Color(0xFF26313B) else TvMuted,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -1199,33 +1228,40 @@ private fun DetailScreen(
                                 }
                             }
                         }
-                        Surface(
-                            modifier = Modifier.height(58.dp).focusRequester(episodeFocusRequester)
+                        Box(
+                            modifier = Modifier.fillMaxWidth().height(58.dp)
+                                .focusRequester(episodeFocusRequester)
                                 .onFocusChanged { focused = it.isFocused }
-                                .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
-                                .clip(RoundedCornerShape(10.dp))
                                 .clickable {
                                     focusedEpisode = episode.number
                                     if (episode.playable) onPlay(seriesId, episode.number, 0.0)
                                 }
                                 .focusable(),
-                            shape = RoundedCornerShape(10.dp),
-                            color = when {
-                                focused -> TvFocus
-                                focusedEpisode == episode.number -> TvPanelRaised
-                                else -> TvPanel
-                            },
-                            border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
-                            shadowElevation = 0.dp
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text(
-                                    episode.number.toString(),
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (focused) Color(0xFF18212B) else TvText
-                                )
-                            }
+                            Surface(
+                                modifier = Modifier.matchParentSize().graphicsLayer {
+                                    if (focused) {
+                                        scaleX = 1.08f
+                                        scaleY = 1.08f
+                                    }
+                                }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+                                    .clip(RoundedCornerShape(10.dp)),
+                                shape = RoundedCornerShape(10.dp),
+                                color = when {
+                                    focused -> TvFocus
+                                    focusedEpisode == episode.number -> TvPanelRaised
+                                    else -> TvPanel
+                                },
+                                border = if (focused) BorderStroke(1.dp, TvFocusBorder) else null,
+                                shadowElevation = 0.dp
+                            ) {}
+                            Text(
+                                episode.number.toString(),
+                                color = if (focused) Color(0xFF18212B) else TvText,
+                                fontSize = if (focused) 19.sp else 18.sp,
+                                fontWeight = if (focused) FontWeight.Medium else FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -1534,18 +1570,27 @@ private fun SettingsActionRow(
     onClick: () -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
-    Surface(
+    Box(
         modifier = modifier.height(78.dp)
             .onFocusChanged { focused = it.isFocused }
-            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
-            .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .focusable(),
-        color = if (focused) focusedColor else TvPanel,
-        shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, if (focused) TvAccent else TvPanelRaised),
-        shadowElevation = 0.dp
+        contentAlignment = Alignment.CenterStart
     ) {
+        // Enlarge only the card surface, not its labels or the click/focus bounds.
+        Surface(
+            modifier = Modifier.matchParentSize().graphicsLayer {
+                if (focused) {
+                    scaleX = 1.08f
+                    scaleY = 1.08f
+                }
+            }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(10.dp)),
+            color = if (focused) focusedColor else TvPanel,
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, if (focused) TvAccent else TvPanelRaised),
+            shadowElevation = 0.dp
+        ) {}
         Row(
             Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -1557,20 +1602,21 @@ private fun SettingsActionRow(
                 Text(
                     title,
                     color = if (focused) Color(0xFF18212B) else TvText,
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.ExtraBold
+                    fontSize = if (focused) 22.sp else 21.sp,
+                    fontWeight = if (focused) FontWeight.Medium else FontWeight.ExtraBold
                 )
                 Text(
                     description,
                     color = if (focused) Color(0xFF26313B) else TvMuted,
-                    fontSize = 15.sp
+                    fontSize = if (focused) 16.sp else 15.sp,
+                    fontWeight = if (focused) FontWeight.Medium else FontWeight.Normal
                 )
             }
             Text(
                 "›",
                 color = if (focused) Color(0xFF18212B) else TvAccent,
-                fontSize = 34.sp,
-                fontWeight = FontWeight.ExtraBold
+                fontSize = if (focused) 36.sp else 34.sp,
+                fontWeight = if (focused) FontWeight.Medium else FontWeight.ExtraBold
             )
         }
     }

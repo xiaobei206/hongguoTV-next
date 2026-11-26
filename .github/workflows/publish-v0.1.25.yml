@@ -1,0 +1,100 @@
+name: Publish v0.1.25 formal release
+
+on:
+  workflow_run:
+    workflows: ["Android CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    if: "${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact Android CI source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Check whether this commit is the final release marker
+        id: release-marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git log -1 --format=%B | grep -Fq 'release: prepare v0.1.25 final'; then
+            echo "matches=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches=false" >> "$GITHUB_OUTPUT"
+            echo "This successful CI run is not the final v0.1.25 release candidate."
+          fi
+
+      - name: Ensure this is still the latest main commit
+        id: current-head
+        shell: bash
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          if [[ "$current" == "$TARGET_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale release candidate $TARGET_SHA; main is now $current."
+          fi
+
+      - name: Download signed APK from the successful CI run
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: hongguoTV-next-v0.1.25-formal-release
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - name: Verify release assets
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/hongguoTV-next-v0.1.25-universal-release-signed.apk
+          test -s dist/hongguoTV-next-v0.1.25-RELEASE-SHA256SUMS.txt
+          test -s dist/hongguoTV-next-v0.1.25-release-certificate.txt
+          (cd dist && sha256sum -c hongguoTV-next-v0.1.25-RELEASE-SHA256SUMS.txt)
+          grep -Fq 'ebf27c606826ad1ae5ac72a2ae31751b2769c2c0029b3ac4d1e748d3daa57a34' dist/hongguoTV-next-v0.1.25-release-certificate.txt
+          ls -lh dist/
+
+      - name: Publish GitHub Release
+        if: steps.release-marker.outputs.matches == 'true' && steps.current-head.outputs.current == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.25
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: 红果 TV Next v0.1.25
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 红果 TV Next v0.1.25
+
+            ### 全局可点击焦点控件视觉统一
+            - 将主页筛选 Chip、通用操作按钮、设置大按钮、详情页季数/选集按钮和播放器控制按钮统一为焦点底板独立放大 1.08 倍（约 +8%）；不改变各自原始布局尺寸、遥控焦点和点击区域。
+            - 每个焦点控件的文字独立绘制，不继承底板缩放；焦点时改用 Medium（500）字重并小幅增加字号，避免靠 Bold 增粗来强调焦点。
+            - 导航侧栏沿用 v0.1.24 已确认的 18sp / Medium；筛选、常用操作和播放器按钮为 16sp；季数标签/集数/说明分别为 17/12/13sp；选集数字为 19sp；设置项标题/说明/箭头分别为 22/16/36sp。
+            - 保留各区域的原有焦点配色、描边、阴影、点击回调与播放自动隐藏逻辑。海报内容卡、系统开关、搜索输入、Logo、播放器状态机与视频画面校准不改。
+
+            ### 兼容性与验证
+            - 保留 Android 6.0 / API 23 最低兼容目标、Universal APK、自维护 openhongguo AAR 和现有三种 ABI。
+            - Android CI 会运行 SDK/应用测试、Lint、APK ABI 与最低 SDK 检查、签名和 SHA-256 验证。
+            - CI 成功不等于所有目标电视的遥控焦点观感均完成实机验收。
+          files: |
+            dist/hongguoTV-next-v0.1.25-universal-release-signed.apk
+            dist/hongguoTV-next-v0.1.25-RELEASE-SHA256SUMS.txt
+            dist/hongguoTV-next-v0.1.25-release-certificate.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

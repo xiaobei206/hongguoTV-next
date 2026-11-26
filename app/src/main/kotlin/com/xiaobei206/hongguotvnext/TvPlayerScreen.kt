@@ -516,7 +516,7 @@ private fun PlayerControlButton(
     onClick: () -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
-    Surface(
+    Box(
         modifier = modifier
             .widthIn(min = 88.dp)
             .height(46.dp)
@@ -524,19 +524,28 @@ private fun PlayerControlButton(
                 focused = it.isFocused
                 if (it.isFocused) onFocused()
             }
-            .shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .focusable(),
-        color = when {
-            focused -> PlayerHudAccent
-            primary -> Color(0xFF3C3024)
-            else -> PlayerHudControl
-        },
-        shape = RoundedCornerShape(12.dp),
-        border = if (focused) BorderStroke(1.dp, Color(0xFFFFD99A)) else BorderStroke(1.dp, PlayerHudControlBorder),
-        shadowElevation = 0.dp
+        contentAlignment = Alignment.Center
     ) {
+        // Keep the player button's enlarged surface separate from its text layer.
+        Surface(
+            modifier = Modifier.matchParentSize().graphicsLayer {
+                if (focused) {
+                    scaleX = 1.08f
+                    scaleY = 1.08f
+                }
+            }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(12.dp)),
+            color = when {
+                focused -> PlayerHudAccent
+                primary -> Color(0xFF3C3024)
+                else -> PlayerHudControl
+            },
+            shape = RoundedCornerShape(12.dp),
+            border = if (focused) BorderStroke(1.dp, Color(0xFFFFD99A)) else BorderStroke(1.dp, PlayerHudControlBorder),
+            shadowElevation = 0.dp
+        ) {}
         Box(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 5.dp), contentAlignment = Alignment.Center) {
             Text(
                 label,
@@ -545,8 +554,9 @@ private fun PlayerControlButton(
                     primary -> Color(0xFFF2CE9B)
                     else -> PlayerHudText
                 },
-                fontSize = 15.sp,
-                fontWeight = if (focused || primary) FontWeight.ExtraBold else FontWeight.SemiBold,
+                fontSize = if (focused) 16.sp else 15.sp,
+                fontWeight = if (focused) FontWeight.Medium
+                    else if (primary) FontWeight.ExtraBold else FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
