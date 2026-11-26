@@ -389,3 +389,5 @@
 - 复核后确认 v0.1.7 的诊断面板只画了 Network Activity，遗漏开心果原有的 Connection Speed 和 Buffer Health 两图，且文字排版未沿用参考实现；这是移植不完整，不应称为已完成优化。
 - v0.1.8 改为沿用开心果的三行图结构、统一 9sp 标签/数值、固定 40 个 500ms 槽位、同一暗色底板与扫描游标；速度曲线使用蓝色平滑折线，网络活动使用分档柱形，缓冲健康度使用按缓冲秒数分档的填充曲线。
 - 三图均使用真实诊断采样：连接速度来自 Media3/网络诊断速度估算，网络活动来自实际接收字节，缓冲健康度来自 ExoPlayer 当前缓冲位置。CI 与电视实机观感仍需分别验收。
+
+- CI 首轮发现 Android Gradle Plugin 9 不允许将 Provider 直接传给 Android SourceSet（`res.srcDir(Provider)`），导致在单元测试阶段构建中止。已移除该 SourceSet Provider 注册方式，改为在既有 `src/main/res/drawable-nodpi` 资源目录内生成独立的 `tv_splash_icon.png`；生成任务挂在 `preBuild` 前，仍不会覆盖原始图标。等待修正后的 CI 再次验证。
