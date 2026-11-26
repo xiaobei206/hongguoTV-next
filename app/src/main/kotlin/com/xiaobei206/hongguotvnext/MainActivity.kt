@@ -1196,13 +1196,21 @@ private fun DetailScreen(
                     Text("同系列", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TvText)
                     Text("${seasons.size} 季", color = TvMuted, fontSize = 14.sp)
                 }
+                // Keep the original LazyRow viewport and item positions. Edge cards anchor their
+                // focus scaling away from the physical edge, so the enlarged background grows inward
+                // instead of beyond the viewport where Compose would clip it.
                 LazyRow(
-                    modifier = Modifier.fillMaxWidth().focusOverflowViewport(horizontalBleed = 12.dp),
-                    contentPadding = PaddingValues(start = 26.dp, top = 10.dp, end = 26.dp, bottom = 10.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(start = 14.dp, top = 10.dp, end = 14.dp, bottom = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(seasons, key = { it.seriesId }) { season ->
                         val selected = season.seriesId == seriesId
+                        val focusTransformOrigin = when (season.seriesId) {
+                            seasons.first().seriesId -> TransformOrigin(0f, 0.5f)
+                            seasons.last().seriesId -> TransformOrigin(1f, 0.5f)
+                            else -> TransformOrigin(0.5f, 0.5f)
+                        }
                         var focused by remember(season.seriesId) { mutableStateOf(false) }
                         Box(
                             modifier = Modifier.width(220.dp).height(72.dp)
@@ -1219,6 +1227,7 @@ private fun DetailScreen(
                                     if (focused) {
                                         scaleX = 1.0625f
                                         scaleY = 1.0625f
+                                        transformOrigin = focusTransformOrigin
                                     }
                                 }.shadow(if (focused) 5.dp else 0.dp, RoundedCornerShape(10.dp))
                                     .clip(RoundedCornerShape(10.dp)),
