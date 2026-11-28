@@ -7,6 +7,22 @@
 - **应用 ID：** `com.xiaobei206.hongguotvnext`
 - **参考项目：** [开心果 Android](https://github.com/xiaobei206/kaixinguo-android)；旧 TV 只读参考：[hongguoTV](https://github.com/xiaobei206/hongguoTV)
 
+## 2026-11-29 接手复核：v0.1.9 之后的播放卡顿与上游提交评估
+
+- 当前 main：v0.1.33 / versionCode 34；对应正式发布工作流已成功：[Actions](https://github.com/xiaobei206/hongguoTV-next/actions/runs/45802934298)。
+- 与 v0.1.9 对比共前进 68 个提交。以下文件 blob 完全相同：`model/Player.kt`、`playback/ExoVideo.kt`、`playback/Streams.kt`、`TvApplication.kt`、`gradle/libs.versions.toml`、`scripts/patch-openhongguo.py`。Media3 仍为 1.11.1；SDK 工作流固定版本也保持不变。因此，暂时没有证据把卡顿归咎于播放器状态机、ExoVideo、CENC 读取代码或依赖升级。
+- 最高优先级的本地 A/B 候选是提交 [5664983](https://github.com/xiaobei206/hongguoTV-next/commit/5664983cdca46a2d17582029a776b2443282fd4f)：为支持四边独立画面校准，把原来直接变换 `PlayerView.videoSurfaceView`（TextureView）的路径，改成对完整 AndroidView 使用 Compose `graphicsLayer`。这是 v0.1.9 以后确认发生的、直接涉及视频视图合成路径的重要变化；它是可验证的性能回归嫌疑，但尚未经过电视实测，不能宣称已经证实是卡顿根因。
+- 后续播放器焦点/控制栏改动主要在 `TvPlayerScreen.kt`；主页焦点溢出视口改动主要在 `MainActivity.kt`。不要把 UI 改动与媒体解码/网络吞吐混为一谈。
+- 上游迁移状态：旧仓库 [Amor5207/lvguo-tv](https://github.com/Amor5207/lvguo-tv) 已于 2026-11-27 标记停止维护并指向新仓库 [Amor5207/lvguo-core](https://github.com/Amor5207/lvguo-core)。新仓库 3.0.x 改为共享 Rust/C-ABI 核心和 Android TV 宿主，不能当作同架构直接同步源。
+- 值得借鉴的上游提交：
+  - [v2.0.4 播放稳定性](https://github.com/Amor5207/lvguo-tv/commit/cb6ca82d6380456c7472406f3c91655610493486)：持续掉帧时从 1080P 降到 720P 并续播；Android 9 取消整集 1080P 后台预取，只保留流式预热。移植思路前要先用本项目 Diagnostics 判断是解码还是网络瓶颈。
+  - [v2.0.3 编码兼容](https://github.com/Amor5207/lvguo-tv/commit/7fe68a191aa9e9da0554fb5fd4701c7c1d2c2f12)：过滤不兼容编码、处理仅剩一个清晰度档位、不要缓存空片源。只移植经过本项目 SDK/Media3/CENC 场景验证的策略。
+  - [v2.0.10 稳定性审计](https://github.com/Amor5207/lvguo-tv/commit/05b267c6bd1cbde2b1101e2d4327806a1ba4cc27)：播放重试/清晰度切换时保留倍速和进度、避免重复事件监听、保护异步请求代次。大量改动跨 Web 与另一套 Java TV 客户端，不宜 cherry-pick。
+  - [v2.1.0 桌面客户端](https://github.com/Amor5207/lvguo-tv/commit/7f309b65fefeb299a0c9d74adfcb1e6a801467fc)：Flutter/Rust/libmpv 多端桌面方案，当前 Android TV Compose 客户端不适合直接移植。
+  - [紧凑电视屏适配](https://github.com/Amor5207/lvguo-tv/commit/21ae57d3bbe5f3343b033c741965067223cf5577)：主要是布局、访客浏览和方向控制，播放性能优先级较低。
+- 推荐下一步：先做最小化 A/B——当视频校准参数处于默认 100% 且四边扩展均为 0 时，避免给 AndroidView 添加无作用的 `graphicsLayer`；非默认校准时仍保留原有四边校准功能。跑 Android CI 后，在小米 E55A、E55S、东芝 75U6900C 或性能较弱的目标电视比较播放首帧、切集耗时、掉帧与缓冲。若仍卡，再根据诊断数据决定是否引入自动降档；不要直接照搬另一套播放器的策略。
+- 本轮仅完成源码/上游审查和文档更新；没有移植上游代码，也没有声称电视实机播放问题已修复。
+
 ## 重要文件
 - `.github/workflows/publish-v0.1.33.yml`：v0.1.33 正式发布流程；仅在最终发布标记提交对应 CI 成功且仍为 main 最新提交时发布。
 - `scripts/create-transparent-splash-icon.py`：从原 256×256 图标生成同画布、透明背景启动资源，不缩放、不裁边。
